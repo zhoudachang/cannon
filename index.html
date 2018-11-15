@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Cannon</title>
+    <style>
+        body {
+            /* set margin to 0 and overflow to hidden, to go fullscreen */
+            margin: 0;
+            display: block;
+            overflow: hidden;
+        }
+    </style>
+    <script src="lib/three.js"></script>
+    <script src="lib/ThreeBSP.js"></script>
+    <script src="lib/OrbitControls.js"></script>
+    <script src="js/Cannon.js"></script>
+</head>
+
+<body>
+    <script>
+        var scene = new THREE.Scene();
+        var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 3000);
+        camera.position.x = -10;
+        camera.position.y = 20;
+        camera.position.z = 10;
+        camera.lookAt(new THREE.Vector3(0, 5, 0));
+        var controls = new THREE.OrbitControls(camera);
+        scene.add(camera);
+        var renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: true
+        });
+        renderer.setClearColor(0xffffc0);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.gammaInput = true;
+        document.body.appendChild(renderer.domElement);
+        scene.add(new THREE.GridHelper(1000,100));
+        scene.add(new Cannon().mesh);
+        scene.add(new THREE.AmbientLight(0xffffff,1.2));
+        function render() {
+            requestAnimationFrame(render);
+            renderer.render(scene, camera);
+        }
+        render();
+    </script>
+</body>
+
+</html>
