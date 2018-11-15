@@ -24,7 +24,7 @@ class Cannon {
         geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
         let hatMesh = new THREE.Mesh(geometry, this.whiteMat);
         hatMesh.name = 'hatMesh';
-        hatMesh.position.y += this.baseHeight;
+        hatMesh.position.y += this.baseHeight + 1;
         this.mesh.add(hatMesh);
     }
     createBase() {
@@ -40,10 +40,11 @@ class Cannon {
         let hatMesh = this.mesh.getObjectByName('hatMesh');
         console.log(hatMesh.position.clone());
         tubeAxleMesh.position.copy(hatMesh.position.clone());
-        let tubeGemo = new THREE.CylinderGeometry(1,1,10,6);
+        tubeAxleMesh.position.y += 1;
+        let tubeGemo = new THREE.CylinderGeometry(1,1,10,10);
         tubeGemo.applyMatrix(new THREE.Matrix4().makeRotationZ(-Math.PI / 2));
         let tubeMesh = new THREE.Mesh(tubeGemo,this.blackMat);
-        tubeMesh.position.x -= 10;
+        tubeMesh.position.set(-10,0,0);
         tubeAxleMesh.add(tubeMesh);
         this.mesh.add(tubeAxleMesh);
     }
