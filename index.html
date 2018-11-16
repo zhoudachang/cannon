@@ -38,9 +38,12 @@
         document.body.appendChild(renderer.domElement);
         scene.add(new THREE.GridHelper(1000,100));
         scene.add(new THREE.AxesHelper(1000));
-        scene.add(new Cannon().mesh);
+        var cannon = new Cannon();
+        scene.add(cannon.mesh);
         scene.add(new THREE.AmbientLight(0xffffff,0.9));
         function render() {
+            // scene.simulate();
+            cannon.update();
             requestAnimationFrame(render);
             renderer.render(scene, camera);
         }
