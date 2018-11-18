@@ -15,16 +15,18 @@
     <script src="lib/ThreeBSP.js"></script>
     <script src="lib/OrbitControls.js"></script>
     <script src="js/Cannon.js"></script>
+    <script src="lib/dat.gui.min.js"></script>
+    <script src="js/Tank.js"></script>
 </head>
 
 <body>
     <script>
         var scene = new THREE.Scene();
         var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 3000);
-        camera.position.x = -30;
-        camera.position.y = 50;
-        camera.position.z = 50;
-        camera.lookAt(new THREE.Vector3(0, 5, 0));
+        // camera.position.x = -20;
+        camera.position.y = 10;
+        camera.position.z = 100;
+        camera.lookAt(new THREE.Vector3(-50, 0, 0));
         var controls = new THREE.OrbitControls(camera);
         scene.add(camera);
         var renderer = new THREE.WebGLRenderer({
@@ -40,9 +42,15 @@
         scene.add(new THREE.AxesHelper(1000));
         var cannon = new Cannon();
         scene.add(cannon.mesh);
+        var tank = new Tank();
+        tank.mesh.position.x -= 50;
+        scene.add(tank.mesh);
         scene.add(new THREE.AmbientLight(0xffffff,0.9));
+        document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+        function onDocumentMouseDown(event){
+            cannon.shoot();
+        }
         function render() {
-            // scene.simulate();
             cannon.update();
             requestAnimationFrame(render);
             renderer.render(scene, camera);
