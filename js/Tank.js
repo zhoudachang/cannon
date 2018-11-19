@@ -50,7 +50,7 @@ class Tank {
         this.mesh.add(hatMesh, hatMesh2);
     }
     createWheels() {
-        let frontWheelGeom = new THREE.CylinderGeometry(4, 4, 2);
+        let frontWheelGeom = new THREE.CylinderGeometry(4, 4, 2,32);
         frontWheelGeom.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
         let frontWheelMesh = new THREE.Mesh(frontWheelGeom, this.blackMat);
         frontWheelMesh.position.set(6, 4, 5);
@@ -58,7 +58,7 @@ class Tank {
         frontLeftWheelMesh.position.z -= 10;
         this.mesh.add(frontWheelMesh, frontLeftWheelMesh);
 
-        let backWheelGeom = new THREE.CylinderGeometry(3, 3, 2);
+        let backWheelGeom = new THREE.CylinderGeometry(3, 3, 2,32);
         backWheelGeom.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
         let backWheelMesh = new THREE.Mesh(backWheelGeom, this.blackMat);
         backWheelMesh.position.set(-7, 3, 5);
