@@ -22,10 +22,11 @@
 <body>
     <script>
         var scene = new THREE.Scene();
+        scene.fog = new THREE.Fog(0x652e37, 350, 500);
         var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 3000);
-        // camera.position.x = -20;
-        camera.position.y = 10;
-        camera.position.z = 150;
+        camera.position.x = 120;
+        camera.position.y = 100;
+        camera.position.z = 0;
         camera.lookAt(new THREE.Vector3(-50, 0, 0));
         var controls = new THREE.OrbitControls(camera);
         scene.add(camera);
@@ -43,9 +44,9 @@
         var cannon = new Cannon();
         scene.add(cannon.mesh);
         var tank = new Tank();
-        tank.mesh.position.x -= 50;
+        tank.mesh.position.x -= 150;
         scene.add(tank.mesh);
-        scene.add(new THREE.AmbientLight(0xffffff,0.9));
+        scene.add(new THREE.HemisphereLight(0xffffff,0xb3858c,.8));
         document.addEventListener( 'mousedown', onDocumentMouseDown, false );
         function onDocumentMouseDown(event){
             cannon.shoot();

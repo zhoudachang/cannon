@@ -2,7 +2,7 @@ class Tank {
     constructor() {
         this.mesh = new THREE.Object3D();
         this.blackMat = new THREE.MeshPhongMaterial({
-            color: 0x000000,
+            color: 0x403133,
             flatShading: THREE.FlatShading
         });
         this.init();
@@ -13,6 +13,10 @@ class Tank {
         this.createHat();
         this.createWheels();
         this.createTube();
+    }
+
+    shoot(){
+
     }
 
     createBody() {
