@@ -87,6 +87,20 @@ class Cannon {
             shell.ha = this.params.horizontalAngle;
             shell.va = this.params.verticalAngle;
             this.shells.push(shell);
+            var firePos = shell.localToWorld(new THREE.Vector3(0, 0, 2));
+            var f = new SmokeParticle();
+            f.mesh.position.x = firePos.x;
+            f.mesh.position.y = firePos.y;
+            f.mesh.position.z = firePos.z;
+            f.color = {
+              r: 255 / 255,
+              g: 205 / 255,
+              b: 74 / 255
+            };
+            f.mesh.material.color.setRGB(f.color.r, f.color.g, f.color.b);
+            f.mesh.material.opacity = 1;
+            this.mesh.add(f.mesh);
+            f.fire(0.8);
         }
     }
 

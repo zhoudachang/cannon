@@ -14,9 +14,11 @@
     <script src="lib/three.js"></script>
     <script src="lib/ThreeBSP.js"></script>
     <script src="lib/OrbitControls.js"></script>
-    <script src="js/Cannon.js"></script>
+    <script src="lib/TweenMax.js"></script>
     <script src="lib/dat.gui.min.js"></script>
+    <script src="js/Cannon.js"></script>
     <script src="js/Tank.js"></script>
+    <script src="js/SmokeParticle.js"></script>
 </head>
 
 <body>
@@ -47,6 +49,7 @@
         tank.mesh.position.x -= 150;
         scene.add(tank.mesh);
         scene.add(new THREE.HemisphereLight(0xffffff,0xb3858c,.8));
+        // scene.add(sp.mesh);
         document.addEventListener( 'mousedown', onDocumentMouseDown, false );
         function onDocumentMouseDown(event){
             cannon.shoot();
