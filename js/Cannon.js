@@ -99,18 +99,20 @@ class Cannon {
             shell.ha = this.params.horizontalAngle;
             shell.va = this.params.verticalAngle;
             this.shells.push(shell);
-            var f = this.getSmokeParticle();
-            f.mesh.position.copy(shell.position);
-            f.mesh.position.x -= 5;
-            f.color = {
-                r: 255 / 255,
-                g: 205 / 255,
-                b: 74 / 255
-            };
-            f.mesh.material.color.setRGB(f.color.r, f.color.g, f.color.b);
-            f.mesh.material.opacity = 1;
-            this.mesh.add(f.mesh);
-            f.fire(0.5); //https://juejin.im/post/5b0ace63f265da0db479270a  
+            this.firetime = 20;
+            // var f = this.getSmokeParticle();
+            // f.mesh.position.copy(shell.position);
+            // f.mesh.position.x -= 5;
+            // f.color = {
+            //     r: 255 / 255,
+            //     g: 205 / 255,
+            //     b: 74 / 255
+            // };
+            // f.mesh.material.color.setRGB(f.color.r, f.color.g, f.color.b);
+            // f.mesh.material.opacity = 1;
+            // this.mesh.add(f.mesh);
+            // f.fire(0.5); 
+            //https://juejin.im/post/5b0ace63f265da0db479270a  
             //https://ithelp.ithome.com.tw/articles/10207221
             //https://www.cnblogs.com/miloyip/archive/2010/06/14/Kinematics_ParticleSystem.html
         }
@@ -130,6 +132,20 @@ class Cannon {
                 shellOne.position.y += Math.sin(Math.abs(shellOne.ha)) * this.params.shellVelocity * t - this.g * Math.pow(yt, 2) / 2;
                 shellOne.position.z += Math.sin(shellOne.va) * this.params.shellVelocity * t;
             }
+        }
+        if(this.firetime){
+            var f = this.getSmokeParticle();
+            f.mesh.position.copy(this.tubeTopMesh.position);
+            f.color = {
+                r: 255 / 255,
+                g: 205 / 255,
+                b: 74 / 255
+            };
+            f.mesh.material.color.setRGB(f.color.r, f.color.g, f.color.b);
+            f.mesh.material.opacity = 1;
+            this.mesh.add(f.mesh);
+            f.fire(2.5); 
+            this.firetime --;
         }
     }
 
