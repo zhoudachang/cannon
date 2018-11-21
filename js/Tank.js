@@ -1,16 +1,19 @@
 class Tank {
     constructor() {
         this.mesh = new THREE.Object3D();
+        // this.mesh.castShadow = true;
+        // this.mesh.receiveShadow = true;
         this.blackMat = new THREE.MeshLambertMaterial({
             color: 0x403133,
             flatShading: THREE.FlatShading
         });
         this.yellowMat = new THREE.MeshLambertMaterial({
             color: 0xfdde8c,
-            shading: THREE.FlatShading
+            flatShading: THREE.FlatShading
         });
         this.smokeParticle = new SmokeParticle();
         this.init();
+
     }
 
     init() {

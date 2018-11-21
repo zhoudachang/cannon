@@ -10,7 +10,7 @@ class SmokeParticle {
             opacity: .5,
             flatShading: THREE.FlatShading
         });
-        var geom = new THREE.BoxGeometry(4, 4, 4);
+        var geom = new THREE.BoxGeometry(1, 1, 1);
         this.mesh = new THREE.Mesh(geom, particleMat);
     }
 
@@ -32,7 +32,7 @@ class SmokeParticle {
     }
 
     fly() {
-        var speed = 10;
+        var speed = 5;
         var initX = this.mesh.position.x;
         var initY = this.mesh.position.y;
         var initZ = this.mesh.position.z;
@@ -78,15 +78,15 @@ class SmokeParticle {
 
     fire(f) {
         var _this = this;
-        var speed = 10;
+        var speed = 2;
         var maxSneezingRate = 8;
         var initX = this.mesh.position.x;
         var initY = this.mesh.position.y;
         var initZ = this.mesh.position.z;
         TweenMax.to(this.mesh.position, speed, {
-            z: 0,
-            y: initY - 2 * f,
-            x: -20,//- Math.max(initX + 15 * f, initX + 40),
+            z: initZ,
+            y: initY + 4,
+            x: initX,
             ease: Strong.easeOut
         });
         TweenMax.to(this.mesh.rotation, speed, {

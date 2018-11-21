@@ -117,6 +117,7 @@
             powerField = document.getElementById('power');
             scene = new THREE.Scene();
             scene.fog = new THREE.Fog(0x652e37, 350, 500);
+            scene.add(new THREE.AxesHelper(1000));
             HEIGHT = window.innerHeight;
             WIDTH = window.innerWidth;
             aspectRatio = WIDTH / HEIGHT;

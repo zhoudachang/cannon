@@ -2,7 +2,7 @@ class Cannon {
     constructor() {
         this.params = {
             horizontalAngle: 0.0,
-            shellVelocity: 100,
+            shellVelocity: 300,
             verticalAngle: 0
         };
         this.tubeTopPosition;
@@ -99,7 +99,7 @@ class Cannon {
             shell.ha = this.params.horizontalAngle;
             shell.va = this.params.verticalAngle;
             this.shells.push(shell);
-            this.firetime = 20;
+            this.firetime = 10;
             // var f = this.getSmokeParticle();
             // f.mesh.position.copy(shell.position);
             // f.mesh.position.x -= 5;
@@ -135,7 +135,8 @@ class Cannon {
         }
         if(this.firetime){
             var f = this.getSmokeParticle();
-            f.mesh.position.copy(this.tubeTopMesh.position);
+            f.mesh.position.copy(this.tubeTopMesh.getWorldPosition(new THREE.Vector3(0,0,0)));
+            f.mesh.position.x -= 2;
             f.color = {
                 r: 255 / 255,
                 g: 205 / 255,

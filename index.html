@@ -16,6 +16,7 @@
     <script src="lib/OrbitControls.js"></script>
     <script src="lib/TweenMax.js"></script>
     <script src="lib/dat.gui.min.js"></script>
+    <script src="lib/stats.min.js"></script>
     <script src="js/Cannon.js"></script>
     <script src="js/Tank.js"></script>
     <script src="js/SmokeParticle.js"></script>
@@ -40,6 +41,8 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.gammaInput = true;
+        var stats = new Stats();
+        document.body.appendChild( stats.dom )
         document.body.appendChild(renderer.domElement);
         scene.add(new THREE.GridHelper(1000,100));
         scene.add(new THREE.AxesHelper(1000));
@@ -56,6 +59,7 @@
         }
         function render() {
             cannon.update();
+            stats.update();
             requestAnimationFrame(render);
             renderer.render(scene, camera);
         }
