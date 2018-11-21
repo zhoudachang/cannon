@@ -78,7 +78,7 @@ class SmokeParticle {
 
     fire(f) {
         var _this = this;
-        var speed = 2;
+        var speed = 1;
         var maxSneezingRate = 8;
         var initX = this.mesh.position.x;
         var initY = this.mesh.position.y;
@@ -86,7 +86,7 @@ class SmokeParticle {
         TweenMax.to(this.mesh.position, speed, {
             z: initZ,
             y: initY + 4,
-            x: initX,
+            x: initX - 5,
             ease: Strong.easeOut
         });
         TweenMax.to(this.mesh.rotation, speed, {
