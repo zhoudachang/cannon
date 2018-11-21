@@ -16,11 +16,11 @@ class Cannon {
         this.shells = [];
         this.clock = new THREE.Clock();
         this.whiteMat = new THREE.MeshLambertMaterial({
-            color: 0xffffff,
+            color: 0xfaf3d7,
             flatShading: THREE.FlatShading
         });
         this.blackMat = new THREE.MeshPhongMaterial({
-            color: 0x000000,
+            color: 0x403133,
             flatShading: THREE.FlatShading
         });
         this.yellowMat = new THREE.MeshLambertMaterial({
@@ -28,7 +28,19 @@ class Cannon {
             flatShading: THREE.FlatShading
         });
         this.init();
+        this.awaitingSmokeParticles = [];
     }
+
+    getSmokeParticle() {
+        var p;
+        if (!this.awaitingSmokeParticles.length) {
+            p = new SmokeParticle();
+            this.awaitingSmokeParticles.push(p);
+        }
+        p = this.awaitingSmokeParticles.pop();
+        return p;
+    }
+
     init() {
         this.createBase();
         this.createHat();
@@ -87,20 +99,20 @@ class Cannon {
             shell.ha = this.params.horizontalAngle;
             shell.va = this.params.verticalAngle;
             this.shells.push(shell);
-            var firePos = shell.localToWorld(new THREE.Vector3(0, 0, 2));
-            var f = new SmokeParticle();
-            f.mesh.position.x = firePos.x;
-            f.mesh.position.y = firePos.y;
-            f.mesh.position.z = firePos.z;
+            var f = this.getSmokeParticle();
+            f.mesh.position.copy(shell.position);
+            f.mesh.position.x -= 5;
             f.color = {
-              r: 255 / 255,
-              g: 205 / 255,
-              b: 74 / 255
+                r: 255 / 255,
+                g: 205 / 255,
+                b: 74 / 255
             };
             f.mesh.material.color.setRGB(f.color.r, f.color.g, f.color.b);
             f.mesh.material.opacity = 1;
             this.mesh.add(f.mesh);
-            f.fire(0.8);
+            f.fire(0.5); //https://juejin.im/post/5b0ace63f265da0db479270a  
+            //https://ithelp.ithome.com.tw/articles/10207221
+            //https://www.cnblogs.com/miloyip/archive/2010/06/14/Kinematics_ParticleSystem.html
         }
     }
 

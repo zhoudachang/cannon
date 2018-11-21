@@ -84,9 +84,9 @@ class SmokeParticle {
         var initY = this.mesh.position.y;
         var initZ = this.mesh.position.z;
         TweenMax.to(this.mesh.position, speed, {
-            x: 0,
+            z: 0,
             y: initY - 2 * f,
-            z: Math.max(initZ + 15 * f, initZ + 40),
+            x: -20,//- Math.max(initX + 15 * f, initX + 40),
             ease: Strong.easeOut
         });
         TweenMax.to(this.mesh.rotation, speed, {
@@ -126,6 +126,34 @@ class SmokeParticle {
         TweenMax.to(this.mesh.material, speed, {
             opacity: 0,
             ease: Strong.easeOut
+        });
+        var bezierColor = [{
+            r: 255 / 255,
+            g: 205 / 255,
+            b: 74 / 255
+        }, {
+            r: 255 / 255,
+            g: 205 / 255,
+            b: 74 / 255
+        }, {
+            r: 255 / 255,
+            g: 205 / 255,
+            b: 74 / 255
+        }, {
+            r: 247 / 255,
+            g: 34 / 255,
+            b: 50 / 255
+        }, {
+            r: 0 / 255,
+            g: 0 / 255,
+            b: 0 / 255
+        }];
+        TweenMax.to(this.color, speed, {
+            bezier: bezierColor,
+            ease: Strong.easeOut,
+            onUpdate: function () {
+                _this.updateColor();
+            }
         });
     }
 }
