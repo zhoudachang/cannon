@@ -33,8 +33,9 @@ class Cannon {
 
     getSmokeParticle() {
         var p;
+        console.log(this.awaitingSmokeParticles.length)
         if (!this.awaitingSmokeParticles.length) {
-            p = new SmokeParticle();
+            p = new SmokeParticle(this.awaitingSmokeParticles);
             this.awaitingSmokeParticles.push(p);
         }
         p = this.awaitingSmokeParticles.pop();

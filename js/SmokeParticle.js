@@ -1,5 +1,6 @@
 class SmokeParticle {
-    constructor() {
+    constructor(pool) {
+        this.pool = pool;
         this.color = {
             r: 0,
             g: 0,
@@ -25,6 +26,7 @@ class SmokeParticle {
         this.mesh.scale.y = 1;
         this.mesh.scale.z = 1;
         this.mesh.material.opacity = .5;
+        this.pool.push(this);
     }
 
     updateColor() {
@@ -77,7 +79,6 @@ class SmokeParticle {
     }
 
     fire(f) {
-        var _this = this;
         var speed = 1;
         var maxSneezingRate = 8;
         var initX = this.mesh.position.x;
@@ -118,9 +119,7 @@ class SmokeParticle {
         TweenMax.to(this.mesh.scale, speed * 2, {
             bezier: bezierScale,
             ease: Strong.easeOut,
-            onComplete: function () {
-                _this.initialize();
-            }
+            onComplete: () => this.initialize()
         });
 
         TweenMax.to(this.mesh.material, speed, {
@@ -151,9 +150,24 @@ class SmokeParticle {
         TweenMax.to(this.color, speed, {
             bezier: bezierColor,
             ease: Strong.easeOut,
-            onUpdate: function () {
-                _this.updateColor();
-            }
+            onUpdate: () => this.updateColor()
         });
+    }
+}
+
+class ParticleHolder {
+    constructor(){
+        this.particlePool = [];
+    }
+
+    getSmokeParticle() {
+        var p;
+        console.log(this.particlePool.length)
+        if (!this.particlePool.length) {
+            p = new SmokeParticle(this.particlePool);
+            this.particlePool.push(p);
+        }
+        p = this.particlePool.pop();
+        return p;
     }
 }
