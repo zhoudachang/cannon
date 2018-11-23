@@ -28,6 +28,7 @@ class Cannon {
             flatShading: THREE.FlatShading
         });
         this.init();
+        // this.mesh.
         this.awaitingSmokeParticles = [];
     }
 
