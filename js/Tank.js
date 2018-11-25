@@ -1,7 +1,7 @@
 class Tank {
     constructor() {
         this.mesh = new THREE.Object3D();
-        // this.mesh.castShadow = true;
+        this.mesh.castShadow = true;
         // this.mesh.receiveShadow = true;
         this.blackMat = new THREE.MeshLambertMaterial({
             color: 0x403133,
@@ -24,7 +24,6 @@ class Tank {
     }
 
     shoot() {
-        
     }
 
     behit(shellPos){
@@ -100,5 +99,9 @@ class Tank {
         tubeTopMesh.position.y += 11;
         tubeTopMesh.position.x += 14;
         this.mesh.add(tubeMesh, tubeTopMesh);
+    }
+
+    update(){
+        
     }
 }

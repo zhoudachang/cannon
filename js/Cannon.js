@@ -93,7 +93,7 @@ class Cannon {
 
     shoot() {
         this.mesh.updateMatrixWorld();
-        if (this.mesh.parent) {
+        if (this.mesh.parent && !this.fireframe) {
             let shell = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 32), this.yellowMat);
             shell.position.copy(this.tubeTopMesh.getWorldPosition(new THREE.Vector3()));
             this.mesh.parent.add(shell);
@@ -101,7 +101,7 @@ class Cannon {
             shell.ha = this.params.horizontalAngle;
             shell.va = this.params.verticalAngle;
             this.shells.push(shell);
-            this.firetime = 10;
+            this.fireframe = 10;
             // var f = this.getSmokeParticle();
             // f.mesh.position.copy(shell.position);
             // f.mesh.position.x -= 5;
@@ -135,7 +135,7 @@ class Cannon {
                 shellOne.position.z += Math.sin(shellOne.va) * this.params.shellVelocity * t;
             }
         }
-        if(this.firetime){
+        if(this.fireframe){
             var f = this.getSmokeParticle();
             f.mesh.position.copy(this.tubeTopMesh.getWorldPosition(new THREE.Vector3(0,0,0)));
             f.mesh.position.x -= 2;
@@ -148,7 +148,7 @@ class Cannon {
             f.mesh.material.opacity = 1;
             this.mesh.add(f.mesh);
             f.fire(2.5); 
-            this.firetime --;
+            this.fireframe --;
         }
     }
 
