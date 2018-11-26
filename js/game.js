@@ -20,7 +20,7 @@ var ennemiesPool = [];
 var particlesPool = [];
 var particlesInUse = [];
 var game = {
-    shellHitDistance: 10
+    shellHitDistance: 20
 };
 
 var scene, camera, renderer, controls;
@@ -150,7 +150,6 @@ Cannon.prototype.update = function () {
             this.shells.splice(i, 1);
             scene.remove(shellOne.mesh);
             shellOne.explode();
-            this.explodeFrame = 20;
         } else if (shellOne.mesh.position.y > 0) {
             shellOne.mesh.position.x -= Math.cos(shellOne.horizontalAngle) *
                 Math.cos(shellOne.verticalAngle) * this.params.shellVelocity * t;
@@ -161,7 +160,6 @@ Cannon.prototype.update = function () {
         } else {
             this.shells.splice(i, 1);
             scene.remove(shellOne.mesh);
-            this.explodeFrame = 20;
             shellOne.explode();
         }
     }
@@ -204,8 +202,7 @@ var Shell = function (position, ha, va) {
 }
 
 Shell.prototype.explode = function () {
-    console.log(this.mesh.position)
-    for (var i = 0; i < 20; i++) {
+    for (var i = 0; i < 5; i++) {
         var f = getParticle();
         f.mesh.position.copy(this.mesh.position);
         f.color = {
@@ -215,10 +212,8 @@ Shell.prototype.explode = function () {
         };
         f.mesh.material.color.setRGB(f.color.r, f.color.g, f.color.b);
         f.mesh.material.opacity = 1;
-        this.mesh.add(f.mesh);
-        var targetX = f.mesh.position.x + (-1 + Math.random()*2)*50;
-        var targetY = f.mesh.position.y + (-1 + Math.random()*2)*50;
-        f.explode(targetX,targetY);
+        scene.add(f.mesh);
+        f.explode();
     }
 }
 
@@ -332,25 +327,55 @@ Particle.prototype.initialize = function () {
 Particle.prototype.updateColor = function () {
     this.mesh.material.color.setRGB(this.color.r, this.color.g, this.color.b);
 }
-Particle.prototype.explode = function (targetX,targetY) {
-    var speed = 5;
+Particle.prototype.explode = function () {
+    var speed = 1;
     TweenMax.to(this.mesh.rotation, speed, {
         x: Math.random() * Math.PI * 3,
-        y: Math.random() * Math.PI * 3,
+        y: Math.random() * Math.PI * 3
     });
-    TweenMax.to(this.mesh.scale, speed, {
-        x: 5,
-        y: 5,
-        z: 5
+    TweenMax.to(this.mesh.scale, speed * 2, {
+        x: 20,
+        y: 20,
+        z: 20,
+        ease: Strong.easeOut,
+        onComplete: () => this.initialize()
     });
+    TweenMax.to(this.mesh.material, speed, {
+        opacity: 0,
+        ease: Strong.easeOut
+    });
+    var bezierColor = [{
+        r: 255 / 255,
+        g: 205 / 255,
+        b: 74 / 255
+    }, {
+        r: 255 / 255,
+        g: 205 / 255,
+        b: 74 / 255
+    }, {
+        r: 255 / 255,
+        g: 205 / 255,
+        b: 74 / 255
+    }, {
+        r: 247 / 255,
+        g: 34 / 255,
+        b: 50 / 255
+    }, {
+        r: 0 / 255,
+        g: 0 / 255,
+        b: 0 / 255
+    }];
+    TweenMax.to(this.color, speed, {
+        bezier: bezierColor,
+        ease: Strong.easeOut,
+        onUpdate: () => this.updateColor()
+    });
+
     TweenMax.to(this.mesh.position, speed, {
-        x: -100,
-        y: 100,
-        z: 0,
-        delay: Math.random() * .1,
-        ease: Power2.easeOut,
-        onComplete: this.initialize()
+        y:  + 5,
+        ease: Strong.easeOut
     });
+
 }
 
 Particle.prototype.fire = function (f, speed) {
