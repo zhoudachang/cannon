@@ -25,7 +25,10 @@ var game = {
 
 var scene, camera, renderer, controls;
 var ambientLight, hemisphereLight, shadowLight;
-var HEIGHT, WIDTH, mousePos = { x: 0, y: 0 };
+var HEIGHT, WIDTH, mousePos = {
+    x: 0,
+    y: 0
+};
 
 var cannon, tank;
 
@@ -46,7 +49,10 @@ function createScene() {
     camera.position.z = 200;
     camera.position.y = 50;
     camera.lookAt(new THREE.Vector3(-50, 0, 0));
-    renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    renderer = new THREE.WebGLRenderer({
+        alpha: true,
+        antialias: true
+    });
     renderer.setSize(WIDTH, HEIGHT);
     renderer.shadowMap.enabled = true;
     renderer.gammaInput = true;
@@ -143,11 +149,11 @@ Cannon.prototype.update = function () {
         if (d < game.shellHitDistance) {
             this.shells.splice(i, 1);
             scene.remove(shellOne.mesh);
-            // shellOne.explode();
+            shellOne.explode();
             this.explodeFrame = 20;
         } else if (shellOne.mesh.position.y > 0) {
-            shellOne.mesh.position.x -= Math.cos(shellOne.horizontalAngle)
-                * Math.cos(shellOne.verticalAngle) * this.params.shellVelocity * t;
+            shellOne.mesh.position.x -= Math.cos(shellOne.horizontalAngle) *
+                Math.cos(shellOne.verticalAngle) * this.params.shellVelocity * t;
             var yt = t + shellOne.yt;
             shellOne.yt += t;
             shellOne.mesh.position.y += Math.sin(Math.abs(shellOne.horizontalAngle)) * this.params.shellVelocity * t - this.g * Math.pow(yt, 2) / 2;
@@ -156,7 +162,7 @@ Cannon.prototype.update = function () {
             this.shells.splice(i, 1);
             scene.remove(shellOne.mesh);
             this.explodeFrame = 20;
-            // shellOne.explode();
+            shellOne.explode();
         }
     }
     if (this.fireframe) {
@@ -172,20 +178,15 @@ Cannon.prototype.update = function () {
         f.mesh.material.color.setRGB(f.color.r, f.color.g, f.color.b);
         f.mesh.material.opacity = 1;
         this.mesh.add(f.mesh);
-        f.fire(2.5,1);
+        f.fire(2.5, 1);
         this.fireframe--;
     }
 
-    if(this.explodeFrame){
-
-        this.explodeFrame --;
-    }
 }
 
 Cannon.prototype.shoot = function () {
     this.mesh.updateMatrixWorld();
-    console.log(this.fireframe)
-    if(!this.fireframe){
+    if (!this.fireframe) {
         var tubeTopMesh = this.mesh.getObjectByName('tubeTopMesh');
         var shell = new Shell(tubeTopMesh.getWorldPosition(new THREE.Vector3()), this.params.horizontalAngle, this.params.verticalAngle)
         scene.add(shell.mesh);
@@ -203,7 +204,22 @@ var Shell = function (position, ha, va) {
 }
 
 Shell.prototype.explode = function () {
-    console.log('expolde');
+    console.log(this.mesh.position)
+    for (var i = 0; i < 20; i++) {
+        var f = getParticle();
+        f.mesh.position.copy(this.mesh.position);
+        f.color = {
+            r: 255 / 255,
+            g: 205 / 255,
+            b: 74 / 255
+        };
+        f.mesh.material.color.setRGB(f.color.r, f.color.g, f.color.b);
+        f.mesh.material.opacity = 1;
+        this.mesh.add(f.mesh);
+        var targetX = f.mesh.position.x + (-1 + Math.random()*2)*50;
+        var targetY = f.mesh.position.y + (-1 + Math.random()*2)*50;
+        f.explode(targetX,targetY);
+    }
 }
 
 var Tank = function () {
@@ -316,7 +332,28 @@ Particle.prototype.initialize = function () {
 Particle.prototype.updateColor = function () {
     this.mesh.material.color.setRGB(this.color.r, this.color.g, this.color.b);
 }
-Particle.prototype.fire = function (f,speed) {
+Particle.prototype.explode = function (targetX,targetY) {
+    var speed = 5;
+    TweenMax.to(this.mesh.rotation, speed, {
+        x: Math.random() * Math.PI * 3,
+        y: Math.random() * Math.PI * 3,
+    });
+    TweenMax.to(this.mesh.scale, speed, {
+        x: 5,
+        y: 5,
+        z: 5
+    });
+    TweenMax.to(this.mesh.position, speed, {
+        x: -100,
+        y: 100,
+        z: 0,
+        delay: Math.random() * .1,
+        ease: Power2.easeOut,
+        onComplete: this.initialize()
+    });
+}
+
+Particle.prototype.fire = function (f, speed) {
     var maxSneezingRate = 8;
     var initX = this.mesh.position.x;
     var initY = this.mesh.position.y;
@@ -423,9 +460,9 @@ function init(event) {
     createCannon();
     createTank();
     var gui = new dat.GUI();
-    gui.add(cannon.params, "horizontalAngle", - Math.PI / 2, 0.0);
+    gui.add(cannon.params, "horizontalAngle", -Math.PI / 2, 0.0);
     gui.add(cannon.params, "shellVelocity", 100, 500);
-    gui.add(cannon.params, "verticalAngle", - Math.PI / 2, Math.PI / 2);
+    gui.add(cannon.params, "verticalAngle", -Math.PI / 2, Math.PI / 2);
     gui.open();
     // createPlane();
     // createSea();
@@ -453,4 +490,3 @@ function handleMouseUp() {
 }
 
 window.addEventListener('load', init, false);
-
