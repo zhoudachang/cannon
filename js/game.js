@@ -1,3 +1,5 @@
+//https://github.com/dominictarr/canvas-progress-bar/blob/master/index.js
+//https://codepen.io/dlanuara/pen/pLaQQd?editors=0010
 var whiteMat = new THREE.MeshLambertMaterial({
     color: 0xfaf3d7,
     flatShading: THREE.FlatShading
@@ -150,6 +152,7 @@ Cannon.prototype.update = function () {
             this.shells.splice(i, 1);
             scene.remove(shellOne.mesh);
             shellOne.explode();
+            tank.hit();
         } else if (shellOne.mesh.position.y > 0) {
             shellOne.mesh.position.x -= Math.cos(shellOne.horizontalAngle) *
                 Math.cos(shellOne.verticalAngle) * this.params.shellVelocity * t;
@@ -281,6 +284,17 @@ var Tank = function () {
     tubeTopMesh.position.y += 11;
     tubeTopMesh.position.x += 14;
     this.mesh.add(tubeMesh, tubeTopMesh);
+}
+
+Tank.prototype.hit = function (){
+    TweenMax.to(this.mesh.position,1, {
+        y:  + 2,
+        ease: Strong.easeOut
+    }).reverse(1);
+    TweenMax.to(this.mesh.rotation,1, {
+        z:  + Math.PI/10,
+        ease: Strong.easeOut
+    }).reverse(1);
 }
 
 Tank.prototype.update = function () {
