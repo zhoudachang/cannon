@@ -222,6 +222,7 @@ Shell.prototype.explode = function () {
 
 var Tank = function () {
     this.mesh = new THREE.Object3D();
+    this.health = 100;
     this.mesh.castShadow = true;
     var bodyShape = new THREE.Shape();
     bodyShape.moveTo(5, 0);
@@ -284,17 +285,34 @@ var Tank = function () {
     tubeTopMesh.position.y += 11;
     tubeTopMesh.position.x += 14;
     this.mesh.add(tubeMesh, tubeTopMesh);
+
+    var canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffff00';
+    ctx.font = 'Bold 50px 微软雅黑';
+    // ctx.lineWidth = 4;
+    ctx.fillText('ennemy', 32, 32);
+    var texture = new THREE.Texture(canvas)
+    texture.needsUpdate = true;
+    var spriteMaterial = new THREE.SpriteMaterial({ map: texture,transparent: true});
+    var sprite = new THREE.Sprite(spriteMaterial);
+    sprite.position.set(0,8,0)
+    sprite.scale.set(30, 30, 30);
+    this.mesh.add(sprite);
+    // var healthbar = 
 }
 
-Tank.prototype.hit = function (){
-    TweenMax.to(this.mesh.position,1, {
-        y:  + 2,
+Tank.prototype.hit = function () {
+    TweenMax.to(this.mesh.position, .5, {
+        y: + 2,
         ease: Strong.easeOut
-    }).reverse(1);
-    TweenMax.to(this.mesh.rotation,1, {
-        z:  + Math.PI/10,
+    }).reverse(.5);
+    TweenMax.to(this.mesh.rotation, .5, {
+        z: + Math.PI / 10,
         ease: Strong.easeOut
-    }).reverse(1);
+    }).reverse(.5);
 }
 
 Tank.prototype.update = function () {
@@ -347,7 +365,7 @@ Particle.prototype.explode = function () {
         x: Math.random() * Math.PI * 3,
         y: Math.random() * Math.PI * 3
     });
-    TweenMax.to(this.mesh.scale, speed * 2, {
+    TweenMax.to(this.mesh.scale, speed * 1.5, {
         x: 20,
         y: 20,
         z: 20,
@@ -386,7 +404,7 @@ Particle.prototype.explode = function () {
     });
 
     TweenMax.to(this.mesh.position, speed, {
-        y:  + 5,
+        y: + 5,
         ease: Strong.easeOut
     });
 
