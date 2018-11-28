@@ -220,9 +220,37 @@ Shell.prototype.explode = function () {
     }
 }
 
+var EnnemiesHolder = function () {
+    this.mesh = new THREE.Object3D();
+    this.ennemiesInUse = [];
+}
+
+EnnemiesHolder.prototype.spawnEnnemies = function () {
+    var ennemy;
+    if (ennemiesPool.length) {
+        ennemy = ennemiesPool.pop();
+    } else {
+        ennemy = new Tank();
+    }
+    ennemy.index = 2;
+    this.ennemiesInUse.push(ennemy);
+    ennemy.mesh.position.x -= 20*ennemy.index;
+    scene.add(ennemy.mesh);
+}
+
+EnnemiesHolder.prototype.move = function () {
+    this.ennemiesInUse.forEach((ennemy,index) => {
+        ennemy.mesh.position.z -= ennemy.speed;
+    })
+}
+
+
 var Tank = function () {
     this.mesh = new THREE.Object3D();
+    this.speed = 0.01;
+    this.index = 0;
     this.health = 100;
+    this.healthMax = 100;
     this.mesh.castShadow = true;
     var bodyShape = new THREE.Shape();
     bodyShape.moveTo(5, 0);
@@ -287,30 +315,33 @@ var Tank = function () {
     this.mesh.add(tubeMesh, tubeTopMesh);
 
     var canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 256;
+    canvas.width = 128;
+    canvas.height = 32;
     var ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#ffff00';
-    ctx.font = 'Bold 50px 微软雅黑';
-    // ctx.lineWidth = 4;
-    ctx.fillText('ennemy', 32, 32);
+    ctx.lineJoin = "round";
+    ctx.fillStyle = '#F0FFF0';
+    ctx.fillRect(0, 0, 128, 4);
+    ctx.fillStyle = '#228B22';
+    ctx.fillRect(2, 2, 64, 2);
     var texture = new THREE.Texture(canvas)
     texture.needsUpdate = true;
-    var spriteMaterial = new THREE.SpriteMaterial({ map: texture,transparent: true});
+    var spriteMaterial = new THREE.SpriteMaterial({
+        map: texture,
+        transparent: true
+    });
     var sprite = new THREE.Sprite(spriteMaterial);
-    sprite.position.set(0,8,0)
+    sprite.position.set(0, 8, 0)
     sprite.scale.set(30, 30, 30);
     this.mesh.add(sprite);
-    // var healthbar = 
 }
 
 Tank.prototype.hit = function () {
     TweenMax.to(this.mesh.position, .5, {
-        y: + 2,
+        y: +2,
         ease: Strong.easeOut
     }).reverse(.5);
     TweenMax.to(this.mesh.rotation, .5, {
-        z: + Math.PI / 10,
+        z: +Math.PI / 10,
         ease: Strong.easeOut
     }).reverse(.5);
 }
@@ -404,7 +435,7 @@ Particle.prototype.explode = function () {
     });
 
     TweenMax.to(this.mesh.position, speed, {
-        y: + 5,
+        y: +5,
         ease: Strong.easeOut
     });
 
@@ -490,11 +521,11 @@ function createCannon() {
     scene.add(cannon.mesh);
 }
 
-function createTank() {
-    tank = new Tank();
-    tank.mesh.position.x -= 150;
-    scene.add(tank.mesh);
-}
+// function createTank() {
+//     tank = new Tank();
+//     tank.mesh.position.x -= 150;
+//     scene.add(tank.mesh);
+// }
 
 function createGroud() {
     var groudGemo = new THREE.PlaneGeometry(1000, 1000, 10, 10);
@@ -515,7 +546,8 @@ function init(event) {
     createGroud();
     createLights();
     createCannon();
-    createTank();
+    ennemiesHolder = new EnnemiesHolder()
+    scene.add(ennemiesHolder.mesh);
     var gui = new dat.GUI();
     gui.add(cannon.params, "horizontalAngle", -Math.PI / 2, 0.0);
     gui.add(cannon.params, "shellVelocity", 100, 500);
@@ -537,7 +569,10 @@ function init(event) {
 
 function loop() {
     cannon.update();
-    tank.update();
+    // tank.update();
+    if (ennemiesHolder.ennemiesInUse.length < 5) {
+        ennemiesHolder.spawnEnnemies();
+    }
     renderer.render(scene, camera);
     requestAnimationFrame(loop);
 }
