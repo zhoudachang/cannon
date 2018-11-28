@@ -18,7 +18,7 @@ var brownMat = new THREE.MeshLambertMaterial({
     flatShading: THREE.FlatShading
 });
 
-var ennemiesPool = [];
+// var ennemiesPool = [];
 var particlesPool = [];
 var particlesInUse = [];
 var game = {
@@ -146,24 +146,31 @@ Cannon.prototype.update = function () {
     this.mesh.rotation.y = this.params.verticalAngle;
     for (var i = 0; i < this.shells.length; i++) {
         var shellOne = this.shells[i];
-        var diffPos = shellOne.mesh.position.clone().sub(tank.mesh.position.clone());
-        var d = diffPos.length();
-        if (d < game.shellHitDistance) {
-            this.shells.splice(i, 1);
-            scene.remove(shellOne.mesh);
-            shellOne.explode();
-            tank.hit();
-        } else if (shellOne.mesh.position.y > 0) {
-            shellOne.mesh.position.x -= Math.cos(shellOne.horizontalAngle) *
-                Math.cos(shellOne.verticalAngle) * this.params.shellVelocity * t;
-            var yt = t + shellOne.yt;
-            shellOne.yt += t;
-            shellOne.mesh.position.y += Math.sin(Math.abs(shellOne.horizontalAngle)) * this.params.shellVelocity * t - this.g * Math.pow(yt, 2) / 2;
-            shellOne.mesh.position.z += Math.sin(shellOne.verticalAngle) * this.params.shellVelocity * t;
-        } else {
-            this.shells.splice(i, 1);
-            scene.remove(shellOne.mesh);
-            shellOne.explode();
+        var shellhit = false;
+        ennemiesHolder.ennemiesInUse.forEach((ennemy, index) => {
+            var diffPos = shellOne.mesh.position.clone().sub(ennemy.mesh.position.clone());
+            var d = diffPos.length();
+            if (d < game.shellHitDistance) {
+                this.shells.splice(i, 1);
+                scene.remove(shellOne.mesh);
+                shellOne.explode();
+                ennemy.hit();
+                shellhit = true;
+            }
+        });
+        if(!shellhit){
+            if (shellOne.mesh.position.y > 0) {
+                shellOne.mesh.position.x -= Math.cos(shellOne.horizontalAngle) *
+                    Math.cos(shellOne.verticalAngle) * this.params.shellVelocity * t;
+                var yt = t + shellOne.yt;
+                shellOne.yt += t;
+                shellOne.mesh.position.y += Math.sin(Math.abs(shellOne.horizontalAngle)) * this.params.shellVelocity * t - this.g * Math.pow(yt, 2) / 2;
+                shellOne.mesh.position.z += Math.sin(shellOne.verticalAngle) * this.params.shellVelocity * t;
+            } else {
+                this.shells.splice(i, 1);
+                scene.remove(shellOne.mesh);
+                shellOne.explode();
+            }
         }
     }
     if (this.fireframe) {
@@ -222,32 +229,36 @@ Shell.prototype.explode = function () {
 
 var EnnemiesHolder = function () {
     this.mesh = new THREE.Object3D();
+    this.ennemiesPool = [];
     this.ennemiesInUse = [];
+    this.index = 2;
 }
 
 EnnemiesHolder.prototype.spawnEnnemies = function () {
     var ennemy;
-    if (ennemiesPool.length) {
-        ennemy = ennemiesPool.pop();
+    if (this.ennemiesPool.length) {
+        ennemy = this.ennemiesPool.pop();
     } else {
         ennemy = new Tank();
     }
-    ennemy.index = 2;
+    ennemy.index = this.index;
+    this.index ++;
     this.ennemiesInUse.push(ennemy);
-    ennemy.mesh.position.x -= 20*ennemy.index;
-    scene.add(ennemy.mesh);
+    ennemy.mesh.position.x -= 30 * ennemy.index;
+    ennemy.mesh.rotation.y -= Math.PI/2;
+    this.mesh.add(ennemy.mesh);
 }
 
-EnnemiesHolder.prototype.move = function () {
-    this.ennemiesInUse.forEach((ennemy,index) => {
-        ennemy.mesh.position.z -= ennemy.speed;
+EnnemiesHolder.prototype.moveAll = function () {
+    this.ennemiesInUse.forEach((ennemy, index) => {
+        ennemy.move();
     })
 }
 
 
 var Tank = function () {
     this.mesh = new THREE.Object3D();
-    this.speed = 0.01;
+    this.speed = 0.1;
     this.index = 0;
     this.health = 100;
     this.healthMax = 100;
@@ -322,7 +333,7 @@ var Tank = function () {
     ctx.fillStyle = '#F0FFF0';
     ctx.fillRect(0, 0, 128, 4);
     ctx.fillStyle = '#228B22';
-    ctx.fillRect(2, 2, 64, 2);
+    ctx.fillRect(2, 1, 64, 2);
     var texture = new THREE.Texture(canvas)
     texture.needsUpdate = true;
     var spriteMaterial = new THREE.SpriteMaterial({
@@ -346,8 +357,8 @@ Tank.prototype.hit = function () {
     }).reverse(.5);
 }
 
-Tank.prototype.update = function () {
-    this.mesh.position.x += 0.1;
+Tank.prototype.move = function () {
+    this.mesh.position.z += this.speed;
 }
 
 function getParticle() {
@@ -569,10 +580,10 @@ function init(event) {
 
 function loop() {
     cannon.update();
-    // tank.update();
     if (ennemiesHolder.ennemiesInUse.length < 5) {
         ennemiesHolder.spawnEnnemies();
     }
+    ennemiesHolder.moveAll();
     renderer.render(scene, camera);
     requestAnimationFrame(loop);
 }
