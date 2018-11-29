@@ -13,9 +13,11 @@ var yellowMat = new THREE.MeshLambertMaterial({
     flatShading: THREE.FlatShading
 });
 
-var brownMat = new THREE.MeshLambertMaterial({
-    color: 0x59332e,
-    flatShading: THREE.FlatShading
+var brownMat = new THREE.MeshBasicMaterial({
+    color: 0x9db3b5, 
+    side:THREE.DoubleSide,
+    overdraw:
+        true
 });
 
 // var ennemiesPool = [];
@@ -61,6 +63,7 @@ function createScene() {
     // renderer.sortObjects = false;
     container = document.body;
     container.appendChild(renderer.domElement);
+    var controls = new THREE.OrbitControls(camera);
     window.addEventListener('resize', handleWindowResize, false);
 }
 
@@ -76,18 +79,20 @@ function createLights() {
     hemisphereLight = new THREE.HemisphereLight(0xaaaaaa, 0x000000, .9)
     ambientLight = new THREE.AmbientLight(0xdc8874, .5);
     shadowLight = new THREE.DirectionalLight(0xffffff, .9);
-    shadowLight.position.set(150, 350, 350);
+    shadowLight.position.set(0, 250, -150);
     shadowLight.castShadow = true;
-    shadowLight.shadow.camera.left = -400;
-    shadowLight.shadow.camera.right = 400;
-    shadowLight.shadow.camera.top = 400;
-    shadowLight.shadow.camera.bottom = -400;
+    shadowLight.shadow.camera.left = -200;
+    shadowLight.shadow.camera.right = 200;
+    shadowLight.shadow.camera.top = 200;
+    shadowLight.shadow.camera.bottom = -200;
     shadowLight.shadow.camera.near = 1;
     shadowLight.shadow.camera.far = 1000;
-    shadowLight.shadow.mapSize.width = 4096;
-    shadowLight.shadow.mapSize.height = 4096;
+    shadowLight.shadow.mapSize.width = 1024;
+    shadowLight.shadow.mapSize.height = 1024;
+    // shadowLight.shadowCameraVisible = true;
+    // scene.add(new THREE.CameraHelper( shadowLight.shadow.camera));
     var ch = new THREE.CameraHelper(shadowLight.shadow.camera);
-    // scene.add(ch);
+    scene.add(ch);
     scene.add(hemisphereLight);
     scene.add(shadowLight);
     scene.add(ambientLight);
@@ -138,6 +143,12 @@ var Cannon = function () {
     tubeTopMesh.position.x = -20;
     horizontalAxle.add(tubeMesh2, tubeTopMesh);
     this.mesh.add(horizontalAxle);
+    this.mesh.traverse(function (object) {
+        if (object instanceof THREE.Mesh) {
+            object.castShadow = true;
+            object.receiveShadow = true;
+        }
+    });
 };
 
 Cannon.prototype.update = function () {
@@ -159,7 +170,7 @@ Cannon.prototype.update = function () {
                 shellhit = true;
             }
         });
-        if(!shellhit){
+        if (!shellhit) {
             if (shellOne.mesh.position.y > 0) {
                 shellOne.mesh.position.x -= Math.cos(shellOne.horizontalAngle) *
                     Math.cos(shellOne.verticalAngle) * this.params.shellVelocity * t;
@@ -243,10 +254,10 @@ EnnemiesHolder.prototype.spawnEnnemies = function () {
         ennemy = new Tank();
     }
     ennemy.index = this.index;
-    this.index ++;
+    this.index++;
     this.ennemiesInUse.push(ennemy);
     ennemy.mesh.position.x -= 30 * ennemy.index;
-    ennemy.mesh.rotation.y -= Math.PI/2;
+    ennemy.mesh.rotation.y -= Math.PI / 2;
     this.mesh.add(ennemy.mesh);
 }
 
@@ -294,7 +305,7 @@ var Tank = function () {
     hatMesh2.position.y += 14;
     this.mesh.add(hatMesh, hatMesh2);
 
-    var frontWheelGeom = new THREE.CylinderGeometry(4, 4, 2, 32);
+    var frontWheelGeom = new THREE.CylinderGeometry(4, 4, 2, 8);
     frontWheelGeom.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
     var frontWheelMesh = new THREE.Mesh(frontWheelGeom, blackMat);
     frontWheelMesh.position.set(6, 4, 5);
@@ -304,7 +315,7 @@ var Tank = function () {
     this.wheels.push(frontWheelMesh);
     this.wheels.push(frontLeftWheelMesh);
 
-    var backWheelGeom = new THREE.CylinderGeometry(3, 3, 2, 32);
+    var backWheelGeom = new THREE.CylinderGeometry(3, 3, 2, 8);
     backWheelGeom.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
     var backWheelMesh = new THREE.Mesh(backWheelGeom, blackMat);
     backWheelMesh.position.set(-7, 3, 5);
@@ -350,6 +361,12 @@ var Tank = function () {
     sprite.position.set(0, 8, 0)
     sprite.scale.set(30, 30, 30);
     this.mesh.add(sprite);
+    this.mesh.traverse(function (object) {
+        if (object instanceof THREE.Mesh) {
+            object.castShadow = true;
+            object.receiveShadow = true;
+        }
+    });
 }
 
 Tank.prototype.hit = function () {
@@ -364,12 +381,8 @@ Tank.prototype.hit = function () {
 }
 
 Tank.prototype.move = function () {
-    for(var i =0;i< this.wheels.length;i++){
-        TweenMax.to(this.wheels[i].rotation,1,{
-            x:Math.PI,
-            ease:Linear.easeOut,
-            repeat:-1
-        });
+    for (var i = 0; i < this.wheels.length; i++) {
+        this.wheels[i].rotation.z -= 0.1;
     }
     this.mesh.position.z += this.speed;
 }
@@ -561,7 +574,7 @@ function createGroud() {
     //     }
     // })
     var groudMesh = new THREE.Mesh(groudGemo, brownMat);
-    groudMesh.castShadow = false;
+    // groudMesh.castShadow = true;
     groudMesh.receiveShadow = true;
     scene.add(groudMesh);
 }
