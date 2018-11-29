@@ -58,6 +58,7 @@ function createScene() {
     renderer.setSize(WIDTH, HEIGHT);
     renderer.shadowMap.enabled = true;
     renderer.gammaInput = true;
+    // renderer.sortObjects = false;
     container = document.body;
     container.appendChild(renderer.domElement);
     window.addEventListener('resize', handleWindowResize, false);
@@ -258,6 +259,7 @@ EnnemiesHolder.prototype.moveAll = function () {
 
 var Tank = function () {
     this.mesh = new THREE.Object3D();
+    this.wheels = [];
     this.speed = 0.1;
     this.index = 0;
     this.health = 100;
@@ -299,6 +301,8 @@ var Tank = function () {
     var frontLeftWheelMesh = frontWheelMesh.clone();
     frontLeftWheelMesh.position.z -= 10;
     this.mesh.add(frontWheelMesh, frontLeftWheelMesh);
+    this.wheels.push(frontWheelMesh);
+    this.wheels.push(frontLeftWheelMesh);
 
     var backWheelGeom = new THREE.CylinderGeometry(3, 3, 2, 32);
     backWheelGeom.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
@@ -307,6 +311,8 @@ var Tank = function () {
     var backLeftWheelMesh = backWheelMesh.clone();
     backLeftWheelMesh.position.z -= 10;
     this.mesh.add(backWheelMesh, backLeftWheelMesh);
+    this.wheels.push(backWheelMesh);
+    this.wheels.push(backLeftWheelMesh);
 
     var tubeAxleGemo = new THREE.CylinderGeometry(2, 2, 4);
     tubeAxleGemo.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
@@ -334,7 +340,7 @@ var Tank = function () {
     ctx.fillRect(0, 0, 128, 4);
     ctx.fillStyle = '#228B22';
     ctx.fillRect(2, 1, 64, 2);
-    var texture = new THREE.Texture(canvas)
+    var texture = new THREE.Texture(canvas);
     texture.needsUpdate = true;
     var spriteMaterial = new THREE.SpriteMaterial({
         map: texture,
@@ -349,15 +355,22 @@ var Tank = function () {
 Tank.prototype.hit = function () {
     TweenMax.to(this.mesh.position, .5, {
         y: +2,
-        ease: Strong.easeOut
+        ease: Bounce.easeOut
     }).reverse(.5);
     TweenMax.to(this.mesh.rotation, .5, {
         z: +Math.PI / 10,
-        ease: Strong.easeOut
+        ease: Bounce.easeOut
     }).reverse(.5);
 }
 
 Tank.prototype.move = function () {
+    for(var i =0;i< this.wheels.length;i++){
+        TweenMax.to(this.wheels[i].rotation,1,{
+            x:Math.PI,
+            ease:Linear.easeOut,
+            repeat:-1
+        });
+    }
     this.mesh.position.z += this.speed;
 }
 
@@ -378,7 +391,8 @@ var Particle = function () {
     var particleMat = new THREE.MeshLambertMaterial({
         transparent: true,
         opacity: .5,
-        flatShading: THREE.FlatShading
+        flatShading: THREE.FlatShading,
+        alphaTest: .1
     });
     var geom = new THREE.BoxGeometry(1, 1, 1);
     this.mesh = new THREE.Mesh(geom, particleMat);
@@ -394,7 +408,7 @@ Particle.prototype.initialize = function () {
     this.mesh.scale.x = 1;
     this.mesh.scale.y = 1;
     this.mesh.scale.z = 1;
-    this.mesh.material.opacity = .5;
+    // this.mesh.material.opacity = .5;
     particlesPool.unshift(this);
 }
 
@@ -407,14 +421,14 @@ Particle.prototype.explode = function () {
         x: Math.random() * Math.PI * 3,
         y: Math.random() * Math.PI * 3
     });
-    TweenMax.to(this.mesh.scale, speed * 1.5, {
+    TweenMax.to(this.mesh.scale, speed * 2, {
         x: 20,
         y: 20,
         z: 20,
         ease: Strong.easeOut,
         onComplete: () => this.initialize()
     });
-    TweenMax.to(this.mesh.material, speed, {
+    TweenMax.to(this.mesh.material, speed * 2, {
         opacity: 0,
         ease: Strong.easeOut
     });
