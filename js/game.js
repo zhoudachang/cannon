@@ -568,11 +568,9 @@ function createCannon() {
 
 function createGroud() {
     var groudGemo = new THREE.PlaneGeometry(100, 100, 10, 10);
-    console.log(groudGemo.faces.length);
     var mats = [brownMat,blackMat];
-    // groudGemo.faces[0].materialIndex = 1;
-    // groudGemo.faces[1].materialIndex = 1;
-    groudGemo.faces[3].materialIndex = 1;
+    groudGemo.faces[0].materialIndex = 1;
+    groudGemo.faces[1].materialIndex = 1;
     groudGemo.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
     // groudGemo.vertices.forEach(function (value, index) {
     //     if (Math.abs(value.x) > 100 && Math.abs(value.z) > 100) {
@@ -580,7 +578,7 @@ function createGroud() {
     //     }
     // })
     var groudMesh = new THREE.Mesh(groudGemo, mats);
-    // groudMesh.castShadow = true;
+    groudMesh.name = 'ground';
     groudMesh.receiveShadow = true;
     scene.add(groudMesh);
 }
@@ -611,14 +609,23 @@ function init(event) {
     loop();
 }
 
+var delay = 0;
+
 function loop() {
     // cannon.update();
     // if (ennemiesHolder.ennemiesInUse.length < 5) {
     //     ennemiesHolder.spawnEnnemies();
     // }
     // ennemiesHolder.moveAll();
+    var groundMesh = scene.getObjectByName('ground');
+    if(delay >= 500){
+        groundMesh.geometry.groupsNeedUpdate = true;
+        groundMesh.geometry.faces[2].materialIndex = 1;
+        groundMesh.geometry.faces[3].materialIndex = 1;
+    }
     renderer.render(scene, camera);
     requestAnimationFrame(loop);
+    delay ++;
 }
 
 function handleMouseUp() {
