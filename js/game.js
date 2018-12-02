@@ -1,5 +1,3 @@
-//https://github.com/dominictarr/canvas-progress-bar/blob/master/index.js
-//https://codepen.io/dlanuara/pen/pLaQQd?editors=0010
 var whiteMat = new THREE.MeshLambertMaterial({
     color: 0xfaf3d7,
     flatShading: THREE.FlatShading
@@ -59,11 +57,14 @@ function createScene() {
     });
     renderer.setSize(WIDTH, HEIGHT);
     renderer.shadowMap.enabled = true;
+    // renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.gammaInput = true;
     // renderer.sortObjects = false;
     container = document.body;
     container.appendChild(renderer.domElement);
     var controls = new THREE.OrbitControls(camera);
+    scene.add(new THREE.GridHelper(100));
+    scene.add(new THREE.AxesHelper(100));
     window.addEventListener('resize', handleWindowResize, false);
 }
 
@@ -86,7 +87,7 @@ function createLights() {
     shadowLight.shadow.camera.top = 200;
     shadowLight.shadow.camera.bottom = -200;
     shadowLight.shadow.camera.near = 1;
-    shadowLight.shadow.camera.far = 1000;
+    shadowLight.shadow.camera.far = 500;
     shadowLight.shadow.mapSize.width = 1024;
     shadowLight.shadow.mapSize.height = 1024;
     // shadowLight.shadowCameraVisible = true;
@@ -305,7 +306,7 @@ var Tank = function () {
     hatMesh2.position.y += 14;
     this.mesh.add(hatMesh, hatMesh2);
 
-    var frontWheelGeom = new THREE.CylinderGeometry(4, 4, 2, 8);
+    var frontWheelGeom = new THREE.CylinderGeometry(4, 4, 2, 16);
     frontWheelGeom.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
     var frontWheelMesh = new THREE.Mesh(frontWheelGeom, blackMat);
     frontWheelMesh.position.set(6, 4, 5);
@@ -315,7 +316,7 @@ var Tank = function () {
     this.wheels.push(frontWheelMesh);
     this.wheels.push(frontLeftWheelMesh);
 
-    var backWheelGeom = new THREE.CylinderGeometry(3, 3, 2, 8);
+    var backWheelGeom = new THREE.CylinderGeometry(3, 3, 2, 16);
     backWheelGeom.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
     var backWheelMesh = new THREE.Mesh(backWheelGeom, blackMat);
     backWheelMesh.position.set(-7, 3, 5);
@@ -566,14 +567,19 @@ function createCannon() {
 // }
 
 function createGroud() {
-    var groudGemo = new THREE.PlaneGeometry(1000, 1000, 10, 10);
+    var groudGemo = new THREE.PlaneGeometry(100, 100, 10, 10);
+    console.log(groudGemo.faces.length);
+    var mats = [brownMat,blackMat];
+    // groudGemo.faces[0].materialIndex = 1;
+    // groudGemo.faces[1].materialIndex = 1;
+    groudGemo.faces[3].materialIndex = 1;
     groudGemo.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
     // groudGemo.vertices.forEach(function (value, index) {
     //     if (Math.abs(value.x) > 100 && Math.abs(value.z) > 100) {
     //         value.y -= Math.random() * 50;
     //     }
     // })
-    var groudMesh = new THREE.Mesh(groudGemo, brownMat);
+    var groudMesh = new THREE.Mesh(groudGemo, mats);
     // groudMesh.castShadow = true;
     groudMesh.receiveShadow = true;
     scene.add(groudMesh);
@@ -583,14 +589,14 @@ function init(event) {
     createScene();
     createGroud();
     createLights();
-    createCannon();
-    ennemiesHolder = new EnnemiesHolder()
-    scene.add(ennemiesHolder.mesh);
-    var gui = new dat.GUI();
-    gui.add(cannon.params, "horizontalAngle", -Math.PI / 2, 0.0);
-    gui.add(cannon.params, "shellVelocity", 100, 500);
-    gui.add(cannon.params, "verticalAngle", -Math.PI / 2, Math.PI / 2);
-    gui.open();
+    // ennemiesHolder = new EnnemiesHolder()
+    // scene.add(ennemiesHolder.mesh);
+    // createCannon();
+    // var gui = new dat.GUI();
+    // gui.add(cannon.params, "horizontalAngle", -Math.PI / 2, 0.0);
+    // gui.add(cannon.params, "shellVelocity", 100, 500);
+    // gui.add(cannon.params, "verticalAngle", -Math.PI / 2, Math.PI / 2);
+    // gui.open();
     // createPlane();
     // createSea();
     // createSky();
@@ -606,17 +612,17 @@ function init(event) {
 }
 
 function loop() {
-    cannon.update();
-    if (ennemiesHolder.ennemiesInUse.length < 5) {
-        ennemiesHolder.spawnEnnemies();
-    }
-    ennemiesHolder.moveAll();
+    // cannon.update();
+    // if (ennemiesHolder.ennemiesInUse.length < 5) {
+    //     ennemiesHolder.spawnEnnemies();
+    // }
+    // ennemiesHolder.moveAll();
     renderer.render(scene, camera);
     requestAnimationFrame(loop);
 }
 
 function handleMouseUp() {
-    cannon.shoot();
+    // cannon.shoot();
 }
 
 window.addEventListener('load', init, false);
