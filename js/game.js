@@ -11,16 +11,18 @@ var yellowMat = new THREE.MeshLambertMaterial({
     flatShading: THREE.FlatShading
 });
 
-var brownMat = new THREE.MeshBasicMaterial({
+var brownMat = new THREE.MeshLambertMaterial({
     color: 0x9db3b5,
     side: THREE.DoubleSide,
-    overdraw: true
+    // overdraw: true
 });
 
 // var ennemiesPool = [];
 var particlesPool = [];
 var particlesInUse = [];
 var game = {
+    stageWidth :100,
+    stageHeight : 100,
     shellHitDistance: 20
 };
 var raycaster = new THREE.Raycaster();
@@ -34,7 +36,6 @@ var HEIGHT, WIDTH, mousePos = {
 };
 
 var cannon, tank;
-
 function createScene() {
     HEIGHT = window.innerHeight;
     WIDTH = window.innerWidth;
@@ -58,14 +59,13 @@ function createScene() {
     });
     renderer.setSize(WIDTH, HEIGHT);
     renderer.shadowMap.enabled = true;
-    // renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.gammaInput = true;
-    // renderer.sortObjects = false;
     container = document.body;
     container.appendChild(renderer.domElement);
     var controls = new THREE.OrbitControls(camera);
     scene.add(new THREE.GridHelper(100));
-    scene.add(new THREE.AxesHelper(100));
+    // scene.add(new THREE.AxesHelper(100));
     window.addEventListener('resize', handleWindowResize, false);
 }
 
@@ -78,21 +78,19 @@ function handleWindowResize() {
 }
 
 function createLights() {
-    hemisphereLight = new THREE.HemisphereLight(0xaaaaaa, 0x000000, .9)
+    hemisphereLight = new THREE.HemisphereLight(0xaaaaaa, 0x000000, .5)
     ambientLight = new THREE.AmbientLight(0xdc8874, .5);
     shadowLight = new THREE.DirectionalLight(0xffffff, .9);
-    shadowLight.position.set(0, 250, -150);
+    shadowLight.position.set(0, 50, -50);
     shadowLight.castShadow = true;
-    shadowLight.shadow.camera.left = -200;
-    shadowLight.shadow.camera.right = 200;
-    shadowLight.shadow.camera.top = 200;
-    shadowLight.shadow.camera.bottom = -200;
+    shadowLight.shadow.camera.left = - game.stageWidth/2;
+    shadowLight.shadow.camera.right = game.stageWidth/2;
+    shadowLight.shadow.camera.top = game.stageHeight / 2;
+    shadowLight.shadow.camera.bottom = - game.stageHeight/2;
     shadowLight.shadow.camera.near = 1;
-    shadowLight.shadow.camera.far = 500;
+    shadowLight.shadow.camera.far = 200;
     shadowLight.shadow.mapSize.width = 1024;
     shadowLight.shadow.mapSize.height = 1024;
-    // shadowLight.shadowCameraVisible = true;
-    // scene.add(new THREE.CameraHelper( shadowLight.shadow.camera));
     var ch = new THREE.CameraHelper(shadowLight.shadow.camera);
     scene.add(ch);
     scene.add(hemisphereLight);
@@ -151,6 +149,10 @@ var Cannon = function () {
             object.receiveShadow = true;
         }
     });
+    this.mesh.scale.set(.5,.5,.5);
+    // var box = new THREE.BoxHelper( this.mesh, 0xffff00 );
+    // scene.add( box );
+    // this.mesh.
 };
 
 Cannon.prototype.update = function () {
@@ -558,6 +560,7 @@ Particle.prototype.fire = function (f, speed) {
 
 function createCannon() {
     cannon = new Cannon();
+    cannon.mesh.position.set(45,0,5);
     scene.add(cannon.mesh);
 }
 
@@ -588,7 +591,7 @@ function init(event) {
     createLights();
     // ennemiesHolder = new EnnemiesHolder()
     // scene.add(ennemiesHolder.mesh);
-    // createCannon();
+    createCannon();
     // var gui = new dat.GUI();
     // gui.add(cannon.params, "horizontalAngle", -Math.PI / 2, 0.0);
     // gui.add(cannon.params, "shellVelocity", 100, 500);
@@ -636,7 +639,7 @@ function handleMouseMove(event) {
 var delay = 0;
 
 function loop() {
-    // cannon.update();
+    cannon.update();
     // if (ennemiesHolder.ennemiesInUse.length < 5) {
     //     ennemiesHolder.spawnEnnemies();
     // }
