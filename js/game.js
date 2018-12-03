@@ -12,10 +12,9 @@ var yellowMat = new THREE.MeshLambertMaterial({
 });
 
 var brownMat = new THREE.MeshBasicMaterial({
-    color: 0x9db3b5, 
-    side:THREE.DoubleSide,
-    overdraw:
-        true
+    color: 0x9db3b5,
+    side: THREE.DoubleSide,
+    overdraw: true
 });
 
 // var ennemiesPool = [];
@@ -24,6 +23,8 @@ var particlesInUse = [];
 var game = {
     shellHitDistance: 20
 };
+var raycaster = new THREE.Raycaster();
+var mouseVector = new THREE.Vector3();
 
 var scene, camera, renderer, controls;
 var ambientLight, hemisphereLight, shadowLight;
@@ -568,9 +569,7 @@ function createCannon() {
 
 function createGroud() {
     var groudGemo = new THREE.PlaneGeometry(100, 100, 10, 10);
-    var mats = [brownMat,blackMat];
-    groudGemo.faces[0].materialIndex = 1;
-    groudGemo.faces[1].materialIndex = 1;
+    var mats = [brownMat, blackMat];
     groudGemo.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
     // groudGemo.vertices.forEach(function (value, index) {
     //     if (Math.abs(value.x) > 100 && Math.abs(value.z) > 100) {
@@ -602,11 +601,36 @@ function init(event) {
     // createEnnemies();
     // createParticles();
 
-    // document.addEventListener('mousemove', handleMouseMove, false);
+    document.addEventListener('mousemove', handleMouseMove, false);
     // document.addEventListener('touchmove', handleTouchMove, false);
     document.addEventListener('mouseup', handleMouseUp, false);
     // document.addEventListener('touchend', handleTouchEnd, false);
     loop();
+}
+
+function handleMouseMove(event) {
+    event.preventDefault();
+    var x = event.layerX;
+    var y = event.layerY;
+    x = (x / window.innerWidth) * 2 - 1;
+    y = -(y / window.innerHeight) * 2 + 1;
+    mouseVector.set(x, y, 0.5);
+    raycaster.setFromCamera(mouseVector, camera);
+    var groundMesh = scene.getObjectByName('ground');
+    var intersects = raycaster.intersectObject(groundMesh, true);
+    if (intersects.length > 0) {
+        var res = intersects.filter(function (res) {
+            return res && res.object && res.object.name == 'ground';
+        })[0];
+        groundMesh.geometry.groupsNeedUpdate = true;
+        groundMesh.geometry.faces.forEach(item => {
+            item.materialIndex = 0;
+        });
+        var findex1 = res.faceIndex;
+        var findex2 = findex1 % 2 == 0 ? (findex1 +1) : findex1 - 1;
+        groundMesh.geometry.faces[findex1].materialIndex = 1;
+        groundMesh.geometry.faces[findex2].materialIndex = 1;
+    }
 }
 
 var delay = 0;
@@ -617,15 +641,15 @@ function loop() {
     //     ennemiesHolder.spawnEnnemies();
     // }
     // ennemiesHolder.moveAll();
-    var groundMesh = scene.getObjectByName('ground');
-    if(delay >= 500){
-        groundMesh.geometry.groupsNeedUpdate = true;
-        groundMesh.geometry.faces[2].materialIndex = 1;
-        groundMesh.geometry.faces[3].materialIndex = 1;
-    }
+    // var groundMesh = scene.getObjectByName('ground');
+    // if (delay >= 500) {
+    //     groundMesh.geometry.groupsNeedUpdate = true;
+    //     groundMesh.geometry.faces[2].materialIndex = 1;
+    //     groundMesh.geometry.faces[3].materialIndex = 1;
+    // }
     renderer.render(scene, camera);
     requestAnimationFrame(loop);
-    delay ++;
+    // delay++;
 }
 
 function handleMouseUp() {
