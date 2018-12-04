@@ -21,8 +21,9 @@ var brownMat = new THREE.MeshLambertMaterial({
 var particlesPool = [];
 var particlesInUse = [];
 var game = {
-    stageWidth :100,
-    stageHeight : 100,
+    stageWidth: 100,
+    stageHeight: 100,
+    segmentsLength :10,
     shellHitDistance: 20
 };
 var raycaster = new THREE.Raycaster();
@@ -83,10 +84,10 @@ function createLights() {
     shadowLight = new THREE.DirectionalLight(0xffffff, .9);
     shadowLight.position.set(0, 50, -50);
     shadowLight.castShadow = true;
-    shadowLight.shadow.camera.left = - game.stageWidth/2;
-    shadowLight.shadow.camera.right = game.stageWidth/2;
+    shadowLight.shadow.camera.left = - game.stageWidth / 2;
+    shadowLight.shadow.camera.right = game.stageWidth / 2;
     shadowLight.shadow.camera.top = game.stageHeight / 2;
-    shadowLight.shadow.camera.bottom = - game.stageHeight/2;
+    shadowLight.shadow.camera.bottom = - game.stageHeight / 2;
     shadowLight.shadow.camera.near = 1;
     shadowLight.shadow.camera.far = 200;
     shadowLight.shadow.mapSize.width = 1024;
@@ -149,7 +150,7 @@ var Cannon = function () {
             object.receiveShadow = true;
         }
     });
-    this.mesh.scale.set(.5,.5,.5);
+    this.mesh.scale.set(.5, .5, .5);
     // var box = new THREE.BoxHelper( this.mesh, 0xffff00 );
     // scene.add( box );
     // this.mesh.
@@ -371,6 +372,8 @@ var Tank = function () {
             object.receiveShadow = true;
         }
     });
+    this.mesh.rotation.y += Math.PI;
+    this.mesh.scale.set(.5,.5,.5);
 }
 
 Tank.prototype.hit = function () {
@@ -560,7 +563,7 @@ Particle.prototype.fire = function (f, speed) {
 
 function createCannon() {
     cannon = new Cannon();
-    cannon.mesh.position.set(45,0,5);
+    cannon.mesh.position.set(45, 0, 5);
     scene.add(cannon.mesh);
 }
 
@@ -570,8 +573,8 @@ function createCannon() {
 //     scene.add(tank.mesh);
 // }
 
-function createGroud() {
-    var groudGemo = new THREE.PlaneGeometry(100, 100, 10, 10);
+function createGroud(w,h) {
+    var groudGemo = new THREE.PlaneGeometry(w, h, w/10, h/10);
     var mats = [brownMat, blackMat];
     groudGemo.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
     // groudGemo.vertices.forEach(function (value, index) {
@@ -585,13 +588,55 @@ function createGroud() {
     scene.add(groudMesh);
 }
 
+function toPosition(pos){
+    var x =  game.stageWidth/2 - game.segmentsLength * pos[0] -5;
+    var z = game.stageHeight/2 - game.segmentsLength * pos[1] - 5;
+    return new THREE.Vector3(x,0,z);
+}
+
 function init(event) {
-    createScene();
-    createGroud();
-    createLights();
+
     // ennemiesHolder = new EnnemiesHolder()
     // scene.add(ennemiesHolder.mesh);
-    createCannon();
+    
+    var loader = new THREE.FileLoader();
+    loader.load(
+        // resource URL
+        'stage/stage_1.json',
+        // onLoad callback
+        function (data) {
+            console.log(data)
+            var stageData = JSON.parse(data);
+            game.stageWidth = stageData.width;
+            game.stageHeight = stageData.height;
+            createScene();
+            createGroud(game.stageWidth,game.stageHeight);
+            createLights();
+            stageData.user.forEach(unit => {
+                if(unit.type == 'tank'){
+                    var tank = new Tank();
+                    tank.mesh.position.copy(toPosition(unit.position));
+                    scene.add(tank.mesh);
+                } else if(unit.type == 'cannon'){
+                    var cannon = new Cannon();
+                    cannon.mesh.position.copy(toPosition(unit.position));
+                    scene.add(cannon.mesh);
+                }
+            });
+            // createCannon();
+            loop();
+        },
+        // onProgress callback
+        function (xhr) {
+            //console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
+        },
+        function (err) {
+            console.error('An error happened');
+        }
+    );
+    // var stageData = JSON.parse(data);
+    //
+
     // var gui = new dat.GUI();
     // gui.add(cannon.params, "horizontalAngle", -Math.PI / 2, 0.0);
     // gui.add(cannon.params, "shellVelocity", 100, 500);
@@ -608,7 +653,7 @@ function init(event) {
     // document.addEventListener('touchmove', handleTouchMove, false);
     document.addEventListener('mouseup', handleMouseUp, false);
     // document.addEventListener('touchend', handleTouchEnd, false);
-    loop();
+    
 }
 
 function handleMouseMove(event) {
@@ -630,7 +675,7 @@ function handleMouseMove(event) {
             item.materialIndex = 0;
         });
         var findex1 = res.faceIndex;
-        var findex2 = findex1 % 2 == 0 ? (findex1 +1) : findex1 - 1;
+        var findex2 = findex1 % 2 == 0 ? (findex1 + 1) : findex1 - 1;
         groundMesh.geometry.faces[findex1].materialIndex = 1;
         groundMesh.geometry.faces[findex2].materialIndex = 1;
     }
@@ -639,7 +684,7 @@ function handleMouseMove(event) {
 var delay = 0;
 
 function loop() {
-    cannon.update();
+    // cannon.update();
     // if (ennemiesHolder.ennemiesInUse.length < 5) {
     //     ennemiesHolder.spawnEnnemies();
     // }
