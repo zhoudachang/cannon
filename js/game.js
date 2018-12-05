@@ -17,7 +17,6 @@ var brownMat = new THREE.MeshLambertMaterial({
     // overdraw: true
 });
 
-// var ennemiesPool = [];
 var particlesPool = [];
 var particlesInUse = [];
 var game = {
@@ -36,7 +35,32 @@ var HEIGHT, WIDTH, mousePos = {
     y: 0
 };
 
-var cannon, tank;
+var Engine = function (){
+    //0 control all
+    this.mode = 0;
+    this.isWorking = false;
+    this.ennemies = [];
+    this.units = [];
+}
+
+Engine.prototype.driveUnit = function(unit,pos,shotPos){
+    
+}
+    
+Engine.prototype.driveAllUnit = function(units){
+
+}
+
+Engine.prototype.selectedUnit = function(pos){
+    this.units.forEach(item => {
+        
+    });
+}
+
+
+
+
+var engine,cannon, tank;
 function createScene() {
     HEIGHT = window.innerHeight;
     WIDTH = window.innerWidth;
@@ -274,6 +298,7 @@ EnnemiesHolder.prototype.moveAll = function () {
 
 
 var Tank = function () {
+    this.moveRadius = 3;
     this.mesh = new THREE.Object3D();
     this.wheels = [];
     this.speed = 0.1;
@@ -595,17 +620,15 @@ function toPosition(pos){
 }
 
 function init(event) {
-
     // ennemiesHolder = new EnnemiesHolder()
     // scene.add(ennemiesHolder.mesh);
-    
     var loader = new THREE.FileLoader();
     loader.load(
         // resource URL
         'stage/stage_1.json',
         // onLoad callback
         function (data) {
-            console.log(data)
+            engine = new Engine();
             var stageData = JSON.parse(data);
             game.stageWidth = stageData.width;
             game.stageHeight = stageData.height;
@@ -678,6 +701,10 @@ function handleMouseMove(event) {
         var findex2 = findex1 % 2 == 0 ? (findex1 + 1) : findex1 - 1;
         groundMesh.geometry.faces[findex1].materialIndex = 1;
         groundMesh.geometry.faces[findex2].materialIndex = 1;
+        var selectUnit = engine.selectedUnit([findex1,findex2])
+        if(selectUnit){
+            engine.showUnitMoveRange(selectUnit);
+        }
     }
 }
 
