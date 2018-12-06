@@ -49,8 +49,15 @@ class Engine {
     driveAllUnit(units) {
     }
     selectedUnit(pos) {
+        var select;
         this.units.forEach(item => {
+            if(item.index[0] == pos[0] && item.index[1] == pos[1] ){
+                console.log('selected ' + item.mesh)
+                select = item;
+                return;
+            }
         });
+        return select;
     }
 }
 
@@ -577,11 +584,11 @@ class Particle {
 
 
 
-function createCannon() {
-    cannon = new Cannon();
-    cannon.mesh.position.set(45, 0, 5);
-    scene.add(cannon.mesh);
-}
+// function createCannon() {
+//     cannon = new Cannon();
+//     cannon.mesh.position.set(45, 0, 5);
+//     scene.add(cannon.mesh);
+// }
 
 // function createTank() {
 //     tank = new Tank();
@@ -616,8 +623,7 @@ function toPosition(pos){
 function toIndex(matIndex){
     var x = Math.floor(matIndex%(game.segmentsLength*2)/2);
     var y = Math.floor(matIndex/(game.segmentsLength*2));
-    console.log(matIndex,x,y);
-    return [x,y];
+    return [y,x];
 }
 
 function init(event) {
@@ -640,11 +646,15 @@ function init(event) {
                 if(unit.type == 'tank'){
                     var tank = new Tank();
                     tank.mesh.position.copy(toPosition(unit.index));
+                    tank.index = unit.index;
                     scene.add(tank.mesh);
+                    engine.units.push(tank);
                 } else if(unit.type == 'cannon'){
                     var cannon = new Cannon();
                     cannon.mesh.position.copy(toPosition(unit.index));
+                    cannon.index = unit.index;
                     scene.add(cannon.mesh);
+                    engine.units.push(cannon);
                 }
             });
             // createCannon();
@@ -682,7 +692,22 @@ function init(event) {
 
 function handleMouseUp() {
     // cannon.shoot();
-    
+    if(scene){
+        var groundMesh = scene.getObjectByName('ground');
+        var intersects = raycaster.intersectObject(groundMesh, true);
+        if (intersects.length > 0) {
+            var res = intersects.filter(function (res) {
+                return res && res.object && res.object.name == 'ground';
+            })[0];
+            var findex1 = res.faceIndex;
+            var findex2 = findex1 % 2 == 0 ? (findex1 + 1) : findex1 - 1;
+            groundMesh.geometry.faces[findex1].materialIndex = 1;
+            groundMesh.geometry.faces[findex2].materialIndex = 1;
+            var index  = toIndex(findex1 > findex2 ? findex2:findex1);
+            var selectUnit = engine.selectedUnit(index);
+            console.log(selectUnit);
+        }
+    }
 }
 
 function handleMouseMove(event) {
@@ -708,11 +733,11 @@ function handleMouseMove(event) {
             var findex2 = findex1 % 2 == 0 ? (findex1 + 1) : findex1 - 1;
             groundMesh.geometry.faces[findex1].materialIndex = 1;
             groundMesh.geometry.faces[findex2].materialIndex = 1;
-            toIndex(findex1 > findex2 ? findex2:findex1);
-            var selectUnit = engine.selectedUnit([findex1,findex2])
-            if(selectUnit){
-                engine.showUnitMoveRange(selectUnit);
-            }
+            // toIndex(findex1 > findex2 ? findex2:findex1);
+            // var selectUnit = engine.selectedUnit([findex1,findex2])
+            // if(selectUnit){
+            //     engine.showUnitMoveRange(selectUnit);
+            // }
         }
     }
 }
