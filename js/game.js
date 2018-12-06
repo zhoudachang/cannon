@@ -17,7 +17,7 @@ var brownMat = new THREE.MeshLambertMaterial({
     side: THREE.DoubleSide,
     // overdraw: true
 });
-
+var greenMat = new THREE.MeshLambertMaterial({color:0xF0FFF0});
 var particlesPool = [];
 var particlesInUse = [];
 var game = {
@@ -597,21 +597,19 @@ class Particle {
 // }
 
 function createGroud(w,h) {
-    var groudGemo = new THREE.PlaneGeometry(w, h, w/10, h/10);
-    var mats = [brownMat, blackMat];
-    groudGemo.applyMatrix(new THREE.Matrix4().makeRotationY(- Math.PI/2 ));
-    groudGemo.applyMatrix(new THREE.Matrix4().makeRotationZ(- Math.PI / 2));
-    // groudGemo.vertices.forEach(function (value, index) {
-    //     if (Math.abs(value.x) > 100 && Math.abs(value.z) > 100) {
-    //         value.y -= Math.random() * 50;
-    //     }
-    // })
-    groudGemo.faces[10].materialIndex = 1;
-    groudGemo.faces[11].materialIndex = 1;
-    var groudMesh = new THREE.Mesh(groudGemo, mats);
+    var groundGemo = new THREE.PlaneGeometry(w, h, w/10, h/10);
+    var mats = [brownMat, blackMat,greenMat];
+    groundGemo.applyMatrix(new THREE.Matrix4().makeRotationY(- Math.PI/2 ));
+    groundGemo.applyMatrix(new THREE.Matrix4().makeRotationZ(- Math.PI / 2));
+    // groundGemo.faces[20].materialIndex = 2;
+    // groundGemo.faces[21].materialIndex = 2;
+    var groudMesh = new THREE.Mesh(groundGemo, mats);
     groudMesh.name = 'ground';
     groudMesh.receiveShadow = true;
-    scene.add(groudMesh);
+    var groundBaseGemo = new THREE.BoxGeometry(w,10,h);
+    var groundBaseMesh = new THREE.Mesh(groundBaseGemo,blackMat);
+    groundBaseMesh.position.y -= 5.2
+    scene.add(groudMesh,groundBaseMesh);
 }
 
 function toPosition(pos){
@@ -705,7 +703,17 @@ function handleMouseUp() {
             groundMesh.geometry.faces[findex2].materialIndex = 1;
             var index  = toIndex(findex1 > findex2 ? findex2:findex1);
             var selectUnit = engine.selectedUnit(index);
-            console.log(selectUnit);
+            if(selectUnit){
+                console.log(selectUnit.moveRadius);
+                groundMesh.geometry.groupsNeedUpdate = true;
+                groundMesh.geometry.faces[findex1].materialIndex = 2;
+                groundMesh.geometry.faces[findex2].materialIndex = 2;
+                var smallOne = findex1 > findex2 ? findex2 : findex1;
+                groundMesh.geometry.faces[smallOne + 2].materialIndex = 2;
+                groundMesh.geometry.faces[smallOne + 3].materialIndex = 2;
+                groundMesh.geometry.faces[smallOne - 1].materialIndex = 2;
+                groundMesh.geometry.faces[smallOne - 2].materialIndex = 2;
+            }
         }
     }
 }
@@ -727,17 +735,14 @@ function handleMouseMove(event) {
             })[0];
             groundMesh.geometry.groupsNeedUpdate = true;
             groundMesh.geometry.faces.forEach(item => {
-                item.materialIndex = 0;
+                if(item.materialIndex != 2){
+                    item.materialIndex = 0;
+                }
             });
             var findex1 = res.faceIndex;
             var findex2 = findex1 % 2 == 0 ? (findex1 + 1) : findex1 - 1;
             groundMesh.geometry.faces[findex1].materialIndex = 1;
             groundMesh.geometry.faces[findex2].materialIndex = 1;
-            // toIndex(findex1 > findex2 ? findex2:findex1);
-            // var selectUnit = engine.selectedUnit([findex1,findex2])
-            // if(selectUnit){
-            //     engine.showUnitMoveRange(selectUnit);
-            // }
         }
     }
 }
