@@ -17,13 +17,17 @@ var brownMat = new THREE.MeshLambertMaterial({
     side: THREE.DoubleSide,
     // overdraw: true
 });
-var greenMat = new THREE.MeshLambertMaterial({color:0xF0FFF0});
+var greenMat = new THREE.MeshLambertMaterial({
+    color: 0xf0fff0,
+    flatShading: THREE.FlatShading,
+    side: THREE.DoubleSide
+});
 var particlesPool = [];
 var particlesInUse = [];
 var game = {
     stageWidth: 100,
     stageHeight: 100,
-    segmentsLength :10,
+    segmentsLength: 10,
     shellHitDistance: 20
 };
 var raycaster = new THREE.Raycaster();
@@ -38,31 +42,51 @@ var HEIGHT, WIDTH, mousePos = {
 
 class Engine {
     constructor() {
-        //0 control all
+        //pending - selected - moveUnit - penddingFire - unitFire - over - pending
+        this.state = 'pending';
         this.mode = 0;
         this.isWorking = false;
         this.ennemies = [];
         this.units = [];
     }
-    driveUnit(unit, pos, shotPos) {
-    }
-    driveAllUnit(units) {
-    }
+    driveUnit(unit, pos, shotPos) {}
+    driveAllUnit(units) {}
     selectedUnit(pos) {
         var select;
         this.units.forEach(item => {
-            if(item.index[0] == pos[0] && item.index[1] == pos[1] ){
-                console.log('selected ' + item.mesh)
+            if (item.index[0] == pos[0] && item.index[1] == pos[1]) {
                 select = item;
                 return;
             }
         });
         return select;
     }
+    calMoveRange(targetIndex, moveRadius) {
+        if (!moveRadius) {
+            return;
+        }
+        var moveCount = moveRadius * (4 + (moveRadius - 1) * 2) + 1;
+        var deltaX = -moveRadius;
+        var deltaY = 0;
+        var result = [
+            []
+        ];
+        for (var i = 0; i < moveCount; i++) {
+            result.push([targetIndex[0] + deltaX, targetIndex[1] + deltaY]);
+            if ((Math.abs(deltaX) + Math.abs(deltaY) == moveRadius) && deltaY >= 0) {
+                deltaX++;
+                deltaY = Math.abs(deltaX) - moveRadius;
+            } else {
+                deltaY++;
+            }
+        }
+        return result;
+    }
 }
 
 
-var engine,cannon, tank;
+var engine, cannon, tank;
+
 function createScene() {
     HEIGHT = window.innerHeight;
     WIDTH = window.innerWidth;
@@ -110,10 +134,10 @@ function createLights() {
     shadowLight = new THREE.DirectionalLight(0xffffff, .9);
     shadowLight.position.set(0, 50, -50);
     shadowLight.castShadow = true;
-    shadowLight.shadow.camera.left = - game.stageWidth / 2;
+    shadowLight.shadow.camera.left = -game.stageWidth / 2;
     shadowLight.shadow.camera.right = game.stageWidth / 2;
     shadowLight.shadow.camera.top = game.stageHeight / 2;
-    shadowLight.shadow.camera.bottom = - game.stageHeight / 2;
+    shadowLight.shadow.camera.bottom = -game.stageHeight / 2;
     shadowLight.shadow.camera.near = 1;
     shadowLight.shadow.camera.far = 200;
     shadowLight.shadow.mapSize.width = 1024;
@@ -209,8 +233,7 @@ class Cannon {
                     shellOne.yt += t;
                     shellOne.mesh.position.y += Math.sin(Math.abs(shellOne.horizontalAngle)) * this.params.shellVelocity * t - this.g * Math.pow(yt, 2) / 2;
                     shellOne.mesh.position.z += Math.sin(shellOne.verticalAngle) * this.params.shellVelocity * t;
-                }
-                else {
+                } else {
                     this.shells.splice(i, 1);
                     scene.remove(shellOne.mesh);
                     shellOne.explode();
@@ -283,8 +306,7 @@ class EnnemiesHolder {
         var ennemy;
         if (this.ennemiesPool.length) {
             ennemy = this.ennemiesPool.pop();
-        }
-        else {
+        } else {
             ennemy = new Tank();
         }
         ennemy.index = this.index;
@@ -303,7 +325,7 @@ class EnnemiesHolder {
 
 class Tank {
     constructor() {
-        this.moveRadius = 3;
+        this.moveRadius = 2;
         this.mesh = new THREE.Object3D();
         this.wheels = [];
         this.speed = 0.1;
@@ -596,32 +618,39 @@ class Particle {
 //     scene.add(tank.mesh);
 // }
 
-function createGroud(w,h) {
-    var groundGemo = new THREE.PlaneGeometry(w, h, w/10, h/10);
-    var mats = [brownMat, blackMat,greenMat];
-    groundGemo.applyMatrix(new THREE.Matrix4().makeRotationY(- Math.PI/2 ));
-    groundGemo.applyMatrix(new THREE.Matrix4().makeRotationZ(- Math.PI / 2));
+function createGroud(w, h) {
+    var groundGemo = new THREE.PlaneGeometry(w, h, w / 10, h / 10);
+    var mats = [brownMat, blackMat, greenMat];
+    groundGemo.applyMatrix(new THREE.Matrix4().makeRotationY(-Math.PI / 2));
+    groundGemo.applyMatrix(new THREE.Matrix4().makeRotationZ(-Math.PI / 2));
     // groundGemo.faces[20].materialIndex = 2;
     // groundGemo.faces[21].materialIndex = 2;
     var groudMesh = new THREE.Mesh(groundGemo, mats);
     groudMesh.name = 'ground';
     groudMesh.receiveShadow = true;
-    var groundBaseGemo = new THREE.BoxGeometry(w,10,h);
-    var groundBaseMesh = new THREE.Mesh(groundBaseGemo,blackMat);
+    var groundBaseGemo = new THREE.BoxGeometry(w, 10, h);
+    var groundBaseMesh = new THREE.Mesh(groundBaseGemo, blackMat);
     groundBaseMesh.position.y -= 5.2
-    scene.add(groudMesh,groundBaseMesh);
+    scene.add(groudMesh, groundBaseMesh);
 }
 
-function toPosition(pos){
-    var x =  game.stageWidth/2 - game.segmentsLength * pos[0] - 5;
-    var z = - game.stageHeight/2 + game.segmentsLength * pos[1] + 5;
-    return new THREE.Vector3(x,0,z);
+function toPosition(pos) {
+    var x = game.stageWidth / 2 - game.segmentsLength * pos[0] - 5;
+    var z = -game.stageHeight / 2 + game.segmentsLength * pos[1] + 5;
+    return new THREE.Vector3(x, 0, z);
 }
 
-function toIndex(matIndex){
-    var x = Math.floor(matIndex%(game.segmentsLength*2)/2);
-    var y = Math.floor(matIndex/(game.segmentsLength*2));
-    return [y,x];
+function toIndex(matIndex) {
+    var x = Math.floor(matIndex % (game.segmentsLength * 2) / 2);
+    var y = Math.floor(matIndex / (game.segmentsLength * 2));
+    return [y, x];
+}
+
+function toFaceIndex(unitIndex) {
+    if (unitIndex[0] >= 0 && unitIndex[1] >= 0) {
+        var index1 = unitIndex[0] * game.segmentsLength * 2 + 2 * unitIndex[1];
+        return index1;
+    }
 }
 
 function init(event) {
@@ -638,16 +667,16 @@ function init(event) {
             game.stageWidth = stageData.width;
             game.stageHeight = stageData.height;
             createScene();
-            createGroud(game.stageWidth,game.stageHeight);
+            createGroud(game.stageWidth, game.stageHeight);
             createLights();
             stageData.user.forEach(unit => {
-                if(unit.type == 'tank'){
+                if (unit.type == 'tank') {
                     var tank = new Tank();
                     tank.mesh.position.copy(toPosition(unit.index));
                     tank.index = unit.index;
                     scene.add(tank.mesh);
                     engine.units.push(tank);
-                } else if(unit.type == 'cannon'){
+                } else if (unit.type == 'cannon') {
                     var cannon = new Cannon();
                     cannon.mesh.position.copy(toPosition(unit.index));
                     cannon.index = unit.index;
@@ -685,12 +714,12 @@ function init(event) {
     // document.addEventListener('touchmove', handleTouchMove, false);
     document.addEventListener('mouseup', handleMouseUp, false);
     // document.addEventListener('touchend', handleTouchEnd, false);
-    
+
 }
 
 function handleMouseUp() {
     // cannon.shoot();
-    if(scene){
+    if (scene) {
         var groundMesh = scene.getObjectByName('ground');
         var intersects = raycaster.intersectObject(groundMesh, true);
         if (intersects.length > 0) {
@@ -701,18 +730,24 @@ function handleMouseUp() {
             var findex2 = findex1 % 2 == 0 ? (findex1 + 1) : findex1 - 1;
             groundMesh.geometry.faces[findex1].materialIndex = 1;
             groundMesh.geometry.faces[findex2].materialIndex = 1;
-            var index  = toIndex(findex1 > findex2 ? findex2:findex1);
+            var index = toIndex(findex1 > findex2 ? findex2 : findex1);
             var selectUnit = engine.selectedUnit(index);
-            if(selectUnit){
-                console.log(selectUnit.moveRadius);
-                groundMesh.geometry.groupsNeedUpdate = true;
-                groundMesh.geometry.faces[findex1].materialIndex = 2;
-                groundMesh.geometry.faces[findex2].materialIndex = 2;
-                var smallOne = findex1 > findex2 ? findex2 : findex1;
-                groundMesh.geometry.faces[smallOne + 2].materialIndex = 2;
-                groundMesh.geometry.faces[smallOne + 3].materialIndex = 2;
-                groundMesh.geometry.faces[smallOne - 1].materialIndex = 2;
-                groundMesh.geometry.faces[smallOne - 2].materialIndex = 2;
+            if (selectUnit) {
+                engine.state = 'selected';
+                var result = engine.calMoveRange(selectUnit.index, selectUnit.moveRadius);
+                if(!result || result.length == 0){
+                    engine.state = 'penddingFire';
+
+                } else {
+                    groundMesh.geometry.groupsNeedUpdate = true;
+                    result.forEach(pindex => {
+                        var faceIndex = toFaceIndex(pindex);
+                        if (faceIndex >= 0) {
+                            groundMesh.geometry.faces[faceIndex].materialIndex = 2;
+                            groundMesh.geometry.faces[faceIndex + 1].materialIndex = 2;
+                        }
+                    });
+                }
             }
         }
     }
@@ -726,7 +761,7 @@ function handleMouseMove(event) {
     y = -(y / window.innerHeight) * 2 + 1;
     mouseVector.set(x, y, 0.5);
     raycaster.setFromCamera(mouseVector, camera);
-    if(scene){
+    if (scene) {
         var groundMesh = scene.getObjectByName('ground');
         var intersects = raycaster.intersectObject(groundMesh, true);
         if (intersects.length > 0) {
@@ -734,15 +769,19 @@ function handleMouseMove(event) {
                 return res && res.object && res.object.name == 'ground';
             })[0];
             groundMesh.geometry.groupsNeedUpdate = true;
-            groundMesh.geometry.faces.forEach(item => {
-                if(item.materialIndex != 2){
-                    item.materialIndex = 0;
+            groundMesh.geometry.faces.forEach(face => {
+                if (face.materialIndex < 2) {
+                    face.materialIndex = 0;
                 }
             });
             var findex1 = res.faceIndex;
             var findex2 = findex1 % 2 == 0 ? (findex1 + 1) : findex1 - 1;
-            groundMesh.geometry.faces[findex1].materialIndex = 1;
-            groundMesh.geometry.faces[findex2].materialIndex = 1;
+            if(groundMesh.geometry.faces[res.faceIndex].materialIndex < 2){
+                groundMesh.geometry.faces[findex1].materialIndex = 1;
+                groundMesh.geometry.faces[findex2].materialIndex = 1;
+            } else {
+                
+            }
         }
     }
 }
