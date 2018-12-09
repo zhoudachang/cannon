@@ -22,6 +22,11 @@ var greenMat = new THREE.MeshLambertMaterial({
     flatShading: THREE.FlatShading,
     side: THREE.DoubleSide
 });
+
+var redMat = new THREE.MeshLambertMaterial({
+    flatShading: THREE.FlatShading,
+    color:0xcd3700
+});
 var particlesPool = [];
 var particlesInUse = [];
 var game = {
@@ -42,45 +47,113 @@ var HEIGHT, WIDTH, mousePos = {
 
 class Engine {
     constructor() {
-        //pending - selected - moveUnit - penddingFire - unitFire - over - pending
+        //pending - selected - unitMove - penddingFire - unitFire - over - pending
         this.state = 'pending';
         this.mode = 0;
         this.isWorking = false;
         this.ennemies = [];
         this.units = [];
+        this.current;
+        // penddingFire;
+        this.targetIndex;
     }
-    driveUnit(unit, pos, shotPos) {}
-    driveAllUnit(units) {}
+    driveUnit() {
+        // this.current.index = mapIndex;
+        if(this.state == 'unitMove'){
+            this.current.mesh.position.copy(toPosition(this.targetIndex));
+            this.current.index = this.targetIndex;
+            return this.calRange(this.targetIndex,this.current.fireRadius);
+        } else if(this.state == 'unitFire'){
+            this.current.shoot();
+            return;
+        }
+    }
+    driveAllUnit(units) { }
     selectedUnit(pos) {
         var select;
         this.units.forEach(item => {
             if (item.index[0] == pos[0] && item.index[1] == pos[1]) {
                 select = item;
+                this.current = select;
                 return;
             }
         });
         return select;
     }
-    calMoveRange(targetIndex, moveRadius) {
-        if (!moveRadius) {
+    calRange(targetIndex, radius) {
+        if (!radius) {
             return;
         }
-        var moveCount = moveRadius * (4 + (moveRadius - 1) * 2) + 1;
-        var deltaX = -moveRadius;
+        var moveCount = radius * (4 + (radius - 1) * 2) + 1;
+        var deltaX = -radius;
         var deltaY = 0;
         var result = [
             []
         ];
         for (var i = 0; i < moveCount; i++) {
-            result.push([targetIndex[0] + deltaX, targetIndex[1] + deltaY]);
-            if ((Math.abs(deltaX) + Math.abs(deltaY) == moveRadius) && deltaY >= 0) {
+            if((targetIndex[0] + deltaX) < 10 && (targetIndex[1] + deltaY) < 10){
+                result.push([targetIndex[0] + deltaX, targetIndex[1] + deltaY]);
+            }
+            if ((Math.abs(deltaX) + Math.abs(deltaY) == radius) && deltaY >= 0) {
                 deltaX++;
-                deltaY = Math.abs(deltaX) - moveRadius;
+                deltaY = Math.abs(deltaX) - radius;
             } else {
                 deltaY++;
             }
         }
         return result;
+    }
+
+    update (){
+        console.log(this.state);
+        var battleMapMesh = scene.getObjectByName('ground');
+        switch(this.state) {
+            case "pending":
+                battleMapMesh.geometry.groupsNeedUpdate = true;
+                battleMapMesh.geometry.faces.forEach(face => {
+                    face.materialIndex = 0;
+                });
+            break;
+            case "selected":
+                var result = engine.calRange(this.current.index, this.current.moveRadius);
+                if(!result || result.length == 0){
+                    this.state = "penddingFire";
+                    return;
+                }
+                battleMapMesh.geometry.groupsNeedUpdate = true;
+                result.forEach(pindex => {
+                    var faceIndex = toFaceIndex(pindex);
+                    if (faceIndex >= 0) {
+                        battleMapMesh.geometry.faces[faceIndex].materialIndex = 2;
+                        battleMapMesh.geometry.faces[faceIndex + 1].materialIndex = 2;
+                    }
+                });
+                break;
+            case "unitMove":
+                this.driveUnit();
+                this.state = "penddingFire";
+                break;
+            case "penddingFire":
+                var fireRange = this.calRange(this.targetIndex,this.current.fireRadius);
+                battleMapMesh.geometry.groupsNeedUpdate = true;
+                battleMapMesh.geometry.faces.forEach(face => {
+                    face.materialIndex = 0;
+                });
+                if(fireRange){
+                    fireRange.forEach(pindex => {
+                        var faceIndex = toFaceIndex(pindex);
+                        if (faceIndex >= 0) {
+                            battleMapMesh.geometry.faces[faceIndex].materialIndex = 3;
+                            battleMapMesh.geometry.faces[faceIndex + 1].materialIndex = 3;
+                        }
+                    });
+                }
+            break;
+            case "unitFire":
+                this.current.shoot();
+                this.state = "pending";
+            break;
+        }
     }
 }
 
@@ -156,6 +229,7 @@ class Cannon {
             shellVelocity: 300,
             verticalAngle: 0
         };
+        this.fireRadius = 5;
         this.g = 10;
         var baseRadiusTop = 10;
         var baseRadiusBottom = 10;
@@ -326,6 +400,7 @@ class EnnemiesHolder {
 class Tank {
     constructor() {
         this.moveRadius = 2;
+        this.fireRadius = 3;
         this.mesh = new THREE.Object3D();
         this.wheels = [];
         this.speed = 0.1;
@@ -437,6 +512,10 @@ class Tank {
             this.wheels[i].rotation.z -= 0.1;
         }
         this.mesh.position.z += this.speed;
+    }
+
+    shoot(){
+        console.log('tank.shot');
     }
 }
 
@@ -620,7 +699,7 @@ class Particle {
 
 function createGroud(w, h) {
     var groundGemo = new THREE.PlaneGeometry(w, h, w / 10, h / 10);
-    var mats = [brownMat, blackMat, greenMat];
+    var mats = [brownMat, blackMat, greenMat,redMat];
     groundGemo.applyMatrix(new THREE.Matrix4().makeRotationY(-Math.PI / 2));
     groundGemo.applyMatrix(new THREE.Matrix4().makeRotationZ(-Math.PI / 2));
     // groundGemo.faces[20].materialIndex = 2;
@@ -718,37 +797,26 @@ function init(event) {
 }
 
 function handleMouseUp() {
-    // cannon.shoot();
-    if (scene) {
-        var groundMesh = scene.getObjectByName('ground');
-        var intersects = raycaster.intersectObject(groundMesh, true);
-        if (intersects.length > 0) {
-            var res = intersects.filter(function (res) {
-                return res && res.object && res.object.name == 'ground';
-            })[0];
-            var findex1 = res.faceIndex;
-            var findex2 = findex1 % 2 == 0 ? (findex1 + 1) : findex1 - 1;
-            groundMesh.geometry.faces[findex1].materialIndex = 1;
-            groundMesh.geometry.faces[findex2].materialIndex = 1;
-            var index = toIndex(findex1 > findex2 ? findex2 : findex1);
-            var selectUnit = engine.selectedUnit(index);
-            if (selectUnit) {
-                engine.state = 'selected';
-                var result = engine.calMoveRange(selectUnit.index, selectUnit.moveRadius);
-                if(!result || result.length == 0){
-                    engine.state = 'penddingFire';
-
-                } else {
-                    groundMesh.geometry.groupsNeedUpdate = true;
-                    result.forEach(pindex => {
-                        var faceIndex = toFaceIndex(pindex);
-                        if (faceIndex >= 0) {
-                            groundMesh.geometry.faces[faceIndex].materialIndex = 2;
-                            groundMesh.geometry.faces[faceIndex + 1].materialIndex = 2;
-                        }
-                    });
-                }
-            }
+    if (!scene) return;
+    var groundMesh = scene.getObjectByName('ground');
+    var intersects = raycaster.intersectObject(groundMesh, true);
+    if (intersects.length > 0) {
+        var res = intersects.filter(function (res) {
+            return res && res.object && res.object.name == 'ground';
+        })[0];
+        var findex1 = res.faceIndex;
+        var findex2 = findex1 % 2 == 0 ? (findex1 + 1) : findex1 - 1;
+        var index = toIndex(findex1 > findex2 ? findex2 : findex1);
+        engine.targetIndex = index;
+        var selectUnit = engine.selectedUnit(index);
+        if (selectUnit && engine.state == 'pending') {
+            engine.state = 'selected';
+        } else if(groundMesh.geometry.faces[res.faceIndex].materialIndex == 2){//selected state
+            engine.state = 'unitMove';
+        } else if(groundMesh.geometry.faces[res.faceIndex].materialIndex == 3){//
+            engine.state = 'unitFire';
+        } else {
+            engine.state = 'pending';
         }
     }
 }
@@ -776,33 +844,20 @@ function handleMouseMove(event) {
             });
             var findex1 = res.faceIndex;
             var findex2 = findex1 % 2 == 0 ? (findex1 + 1) : findex1 - 1;
-            if(groundMesh.geometry.faces[res.faceIndex].materialIndex < 2){
+            if (groundMesh.geometry.faces[res.faceIndex].materialIndex < 2) {
                 groundMesh.geometry.faces[findex1].materialIndex = 1;
                 groundMesh.geometry.faces[findex2].materialIndex = 1;
             } else {
-                
+
             }
         }
     }
 }
 
-var delay = 0;
-
 function loop() {
-    // cannon.update();
-    // if (ennemiesHolder.ennemiesInUse.length < 5) {
-    //     ennemiesHolder.spawnEnnemies();
-    // }
-    // ennemiesHolder.moveAll();
-    // var groundMesh = scene.getObjectByName('ground');
-    // if (delay >= 500) {
-    //     groundMesh.geometry.groupsNeedUpdate = true;
-    //     groundMesh.geometry.faces[2].materialIndex = 1;
-    //     groundMesh.geometry.faces[3].materialIndex = 1;
-    // }
+    engine.update();
     renderer.render(scene, camera);
     requestAnimationFrame(loop);
-    // delay++;
 }
 
 window.addEventListener('load', init, false);
