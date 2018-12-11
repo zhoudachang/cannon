@@ -119,7 +119,8 @@ class Engine {
                 });
             break;
             case "selected":
-                var result = engine.calRange(this.current.index, this.current.moveRadius);
+                // var result = engine.calRange(this.current.index, this.current.moveRadius);
+                var result = moveRange(this.current.index, this.current.moveRadius);
                 if(!result || result.length == 0){
                     this.state = "penddingFire";
                     return;
@@ -132,6 +133,7 @@ class Engine {
                         battleMapMesh.geometry.faces[faceIndex + 1].materialIndex = 2;
                     }
                 });
+                this.state = "pendingMove";
                 break;
             case "unitMove":
                 this.driveUnit();
@@ -403,7 +405,7 @@ class EnnemiesHolder {
 
 class Tank {
     constructor() {
-        this.moveRadius = 2;
+        this.moveRadius = 3;
         this.fireRadius = 3;
         this.mesh = new THREE.Object3D();
         this.wheels = [];
