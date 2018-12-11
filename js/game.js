@@ -104,8 +104,12 @@ class Engine {
         return result;
     }
 
+    calRange2(targetIndex, radius){
+        
+    }
+
     update (){
-        console.log(this.state);
+        // console.log(this.state);
         var battleMapMesh = scene.getObjectByName('ground');
         switch(this.state) {
             case "pending":
@@ -745,6 +749,13 @@ function init(event) {
             var stageData = JSON.parse(data);
             game.stageWidth = stageData.width;
             game.stageHeight = stageData.height;
+            game.map = [[]];
+            for(var x = 0; x < game.segmentsLength; x++){
+                game.map[x] = [];
+                for(var y = 0; y < game.segmentsLength; y++){
+                    game.map[x][y] = 0;
+                }
+            }
             createScene();
             createGroud(game.stageWidth, game.stageHeight);
             createLights();
@@ -761,6 +772,7 @@ function init(event) {
                     cannon.index = unit.index;
                     scene.add(cannon.mesh);
                     engine.units.push(cannon);
+                    game.map[unit.index[0]][unit.index[1]] = 1;
                 }
             });
             // createCannon();
@@ -813,6 +825,7 @@ function handleMouseUp() {
             engine.state = 'selected';
         } else if(groundMesh.geometry.faces[res.faceIndex].materialIndex == 2){//selected state
             engine.state = 'unitMove';
+            console.log( findPath(game.map, engine.current.index,index));
         } else if(groundMesh.geometry.faces[res.faceIndex].materialIndex == 3){//
             engine.state = 'unitFire';
         } else {
