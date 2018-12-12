@@ -120,7 +120,7 @@ class Engine {
             break;
             case "selected":
                 // var result = engine.calRange(this.current.index, this.current.moveRadius);
-                var result = moveRange(this.current.index, this.current.moveRadius);
+                var result = moveRange(game.map,this.current.index, this.current.moveRadius);
                 if(!result || result.length == 0){
                     this.state = "penddingFire";
                     return;
@@ -405,7 +405,7 @@ class EnnemiesHolder {
 
 class Tank {
     constructor() {
-        this.moveRadius = 3;
+        this.moveRadius = 5;
         this.fireRadius = 3;
         this.mesh = new THREE.Object3D();
         this.wheels = [];
