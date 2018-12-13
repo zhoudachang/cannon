@@ -1,32 +1,10 @@
-var whiteMat = new THREE.MeshLambertMaterial({
-    color: 0xfaf3d7,
-    flatShading: THREE.FlatShading
-});
-var blackMat = new THREE.MeshPhongMaterial({
-    color: 0x403133,
-    flatShading: THREE.FlatShading,
-    side: THREE.DoubleSide
-});
-var yellowMat = new THREE.MeshLambertMaterial({
-    color: 0xfdd276,
-    flatShading: THREE.FlatShading
-});
+var whiteMat = new THREE.MeshLambertMaterial({ color: 0xfaf3d7, flatShading: THREE.FlatShading });
+var blackMat = new THREE.MeshPhongMaterial({ color: 0x403133, flatShading: THREE.FlatShading, side: THREE.DoubleSide });
+var yellowMat = new THREE.MeshLambertMaterial({ color: 0xfdd276, flatShading: THREE.FlatShading });
+var brownMat = new THREE.MeshLambertMaterial({ color: 0x9db3b5, side: THREE.DoubleSide });
+var greenMat = new THREE.MeshLambertMaterial({ color: 0xf0fff0, flatShading: THREE.FlatShading, side: THREE.DoubleSide });
+var redMat = new THREE.MeshLambertMaterial({ flatShading: THREE.FlatShading, color: 0xcd3700 });
 
-var brownMat = new THREE.MeshLambertMaterial({
-    color: 0x9db3b5,
-    side: THREE.DoubleSide,
-    // overdraw: true
-});
-var greenMat = new THREE.MeshLambertMaterial({
-    color: 0xf0fff0,
-    flatShading: THREE.FlatShading,
-    side: THREE.DoubleSide
-});
-
-var redMat = new THREE.MeshLambertMaterial({
-    flatShading: THREE.FlatShading,
-    color:0xcd3700
-});
 var particlesPool = [];
 var particlesInUse = [];
 var game = {
@@ -54,20 +32,115 @@ class Engine {
         this.ennemies = [];
         this.units = [];
         this.current;
-        // penddingFire;
         this.targetIndex;
     }
     driveUnit() {
-        // this.current.index = mapIndex;
-        if(this.state == 'unitMove'){
-            this.current.mesh.position.copy(toPosition(this.targetIndex));
-            this.current.index = this.targetIndex;
-            return this.calRange(this.targetIndex,this.current.fireRadius);
-        } else if(this.state == 'unitFire'){
+        if (this.state == 'unitMove') {
+            // this.current.mesh.position.copy(toPosition(this.targetIndex));
+            var routes = this.routeUnit(game.map,this.current.index,this.targetIndex);
+            this.current.move(routes);
+            // this.current.index = this.targetIndex;
+            return this.calFireRange(this.targetIndex, this.current.fireRadius);
+        } else if (this.state == 'unitFire') {
             this.current.shoot();
             return;
         }
     }
+
+    routeUnit(map, start, end) {
+        var width = map[0].length;
+        var height = map.length;
+        var size = width * height;
+        var distance = function(){
+            return Math.max(Math.abs(start.x - end.x), Math.abs(start.y - end.y));
+        };
+        var can_walk = function (x, y) {
+            var res = map[x] != null && map[x][y] != null && (map[x][y] == 0);
+            return res;
+        };
+        var getNeighbours = function (x, y) {
+            // North South East West
+            var N = y + 1;
+            var S = y - 1;
+            var E = x - 1;
+            var W = x + 1;
+            // Check we don't go off the map or hit a wall
+            var myN = N > -1 && can_walk(x, N);
+            var myS = S < height && can_walk(x, S);
+            var myE = E < width && can_walk(E, y);
+            var myW = W > -1 && can_walk(W, y);
+            // Results
+            var result = [];
+            if (myN) result.push({ x: x, y: N });
+            if (myE) result.push({ x: E, y: y });
+            if (myS) result.push({ x: x, y: S });
+            if (myW) result.push({ x: W, y: y });
+            return result;
+        };
+        function Node(Parent, Point) {
+            var node = {
+                Parent: Parent,
+                value: Point.x + (Point.y * width),
+                x: Point.x,
+                y: Point.y,
+                f: 0,
+                g: 0
+            };
+            return node;
+        }
+        function calculatePath() {
+            var p_start = Node(null, {
+                x: start[0],
+                y: start[1]
+            });
+            var p_end = Node(null, {
+                x: end[0],
+                y: end[1]
+            });
+            var AStar = new Array(size);
+            var open = [p_start];
+            var closed = [];
+            var result = [];
+            var neighbours, curr_node, curr_path;
+            var length, max, min, i, j;
+            while (length = open.length) {
+                max = size;
+                min = -1;
+                for (var i = 0; i < length; i++) {
+                    if (open[i].f < max) {
+                        max = open[i].f;
+                        min = i;
+                    }
+                }
+                curr_node = open.splice(min, 1)[0];
+                if (curr_node.value === p_end.value) {
+                    curr_path = closed[closed.push(curr_node) - 1];
+                    do {
+                        result.push([curr_path.x, curr_path.y]);
+                    }
+                    while (curr_path = curr_path.Parent) {
+                        AStar = closed = open = [];
+                        result.reverse();
+                    }
+                } else {
+                    neighbours = getNeighbours(curr_node.x, curr_node.y);
+                    for (var i = 0, j = neighbours.length; i < j; i++) {
+                        curr_path = Node(curr_node, neighbours[i]);
+                        if (!AStar[curr_path.value]) {
+                            curr_path.g = curr_node.g + distance(neighbours[i], curr_node);
+                            curr_path.f = curr_path.g + distance(neighbours[i], p_end);
+                            open.push(curr_path);
+                            AStar[curr_path.value] = true;
+                        }
+                    }
+                    closed.push(curr_node);
+                }
+            }
+            return result;
+        }
+        return calculatePath();
+    }
+
     driveAllUnit(units) { }
     selectedUnit(pos) {
         var select;
@@ -80,18 +153,17 @@ class Engine {
         });
         return select;
     }
-    calRange(targetIndex, radius) {
+
+    calFireRange(targetIndex, radius) {
         if (!radius) {
             return;
         }
         var moveCount = radius * (4 + (radius - 1) * 2) + 1;
         var deltaX = -radius;
         var deltaY = 0;
-        var result = [
-            []
-        ];
+        var result = [];
         for (var i = 0; i < moveCount; i++) {
-            if((targetIndex[0] + deltaX) < 10 && (targetIndex[1] + deltaY) < 10){
+            if ((targetIndex[0] + deltaX) < 10 && (targetIndex[1] + deltaY) < 10) {
                 result.push([targetIndex[0] + deltaX, targetIndex[1] + deltaY]);
             }
             if ((Math.abs(deltaX) + Math.abs(deltaY) == radius) && deltaY >= 0) {
@@ -103,25 +175,57 @@ class Engine {
         }
         return result;
     }
-
-    calRange2(targetIndex, radius){
-        
+    calMoveRange(map, index, radius) {
+        var tempList = [
+            []
+        ];
+        tempList[0] = index;
+        var rangeList = [
+            []
+        ];
+        rangeList[0] = index;
+        var checkRange = function (node, tempList) {
+            var route = Math.abs(node[0] - index[0]) + Math.abs(node[1] - index[1]);
+            if (route <= radius) {
+                if (!rangeList.find(e => e[0] == node[0] && e[1] == node[1])
+                    && node[0] < 10 && node[1] < 10 && node[0] >= 0 && node[1] >= 0
+                    && map[node[0]][node[1]] != null && map[node[0]][node[1]] == 0) {
+                    rangeList.push(node);
+                    tempList.push(node);
+                }
+            }
+        }
+        var rangeScan = function () {
+            var tempList_ = [];
+            for (var i = 0; i < tempList.length; i++) {
+                var node = tempList[i];
+                checkRange([node[0], node[1] - 1], tempList_);
+                checkRange([node[0], node[1] + 1], tempList_);
+                checkRange([node[0] + 1, node[1]], tempList_);
+                checkRange([node[0] - 1, node[1]], tempList_);
+            }
+            return tempList_;
+        };
+        var countPoint = 0;
+        while (countPoint < radius) {
+            tempList = rangeScan();
+            countPoint++
+        }
+        return rangeList;
     }
 
-    update (){
-        // console.log(this.state);
+    update() {
         var battleMapMesh = scene.getObjectByName('ground');
-        switch(this.state) {
+        switch (this.state) {
             case "pending":
                 battleMapMesh.geometry.groupsNeedUpdate = true;
                 battleMapMesh.geometry.faces.forEach(face => {
                     face.materialIndex = 0;
                 });
-            break;
+                break;
             case "selected":
-                // var result = engine.calRange(this.current.index, this.current.moveRadius);
-                var result = moveRange(game.map,this.current.index, this.current.moveRadius);
-                if(!result || result.length == 0){
+                var result = engine.calMoveRange(game.map, this.current.index, this.current.moveRadius);
+                if (!result || result.length == 0) {
                     this.state = "penddingFire";
                     return;
                 }
@@ -140,12 +244,12 @@ class Engine {
                 this.state = "penddingFire";
                 break;
             case "penddingFire":
-                var fireRange = this.calRange(this.targetIndex,this.current.fireRadius);
+                var fireRange = this.calFireRange(this.targetIndex, this.current.fireRadius);
                 battleMapMesh.geometry.groupsNeedUpdate = true;
                 battleMapMesh.geometry.faces.forEach(face => {
                     face.materialIndex = 0;
                 });
-                if(fireRange){
+                if (fireRange) {
                     fireRange.forEach(pindex => {
                         var faceIndex = toFaceIndex(pindex);
                         if (faceIndex >= 0) {
@@ -154,11 +258,11 @@ class Engine {
                         }
                     });
                 }
-            break;
+                break;
             case "unitFire":
                 this.current.shoot();
                 this.state = "pending";
-            break;
+                break;
         }
     }
 }
@@ -195,7 +299,7 @@ function createScene() {
     container.appendChild(renderer.domElement);
     var controls = new THREE.OrbitControls(camera);
     scene.add(new THREE.GridHelper(100));
-    // scene.add(new THREE.AxesHelper(100));
+    scene.add(new THREE.AxesHelper(100));
     window.addEventListener('resize', handleWindowResize, false);
 }
 
@@ -513,14 +617,19 @@ class Tank {
             ease: Bounce.easeOut
         }).reverse(.5);
     }
-    move() {
-        for (var i = 0; i < this.wheels.length; i++) {
-            this.wheels[i].rotation.z -= 0.1;
-        }
-        this.mesh.position.z += this.speed;
+    move(route) {
+        // for (var i = 0; i < this.wheels.length; i++) {
+        //     this.wheels[i].rotation.z -= 0.1;
+        // }
+        // this.mesh.position.z += this.speed;
+        var targetPos = toPosition(route[route.length - 1]);
+        TweenMax.to(this.mesh.position,1*route.length,{
+            x:targetPos.x,
+            z:targetPos.z
+        });
     }
 
-    shoot(){
+    shoot() {
         console.log('tank.shot');
     }
 }
@@ -705,7 +814,7 @@ class Particle {
 
 function createGroud(w, h) {
     var groundGemo = new THREE.PlaneGeometry(w, h, w / 10, h / 10);
-    var mats = [brownMat, blackMat, greenMat,redMat];
+    var mats = [brownMat, blackMat, greenMat, redMat];
     groundGemo.applyMatrix(new THREE.Matrix4().makeRotationY(-Math.PI / 2));
     groundGemo.applyMatrix(new THREE.Matrix4().makeRotationZ(-Math.PI / 2));
     // groundGemo.faces[20].materialIndex = 2;
@@ -752,9 +861,9 @@ function init(event) {
             game.stageWidth = stageData.width;
             game.stageHeight = stageData.height;
             game.map = [[]];
-            for(var x = 0; x < game.segmentsLength; x++){
+            for (var x = 0; x < game.segmentsLength; x++) {
                 game.map[x] = [];
-                for(var y = 0; y < game.segmentsLength; y++){
+                for (var y = 0; y < game.segmentsLength; y++) {
                     game.map[x][y] = 0;
                 }
             }
@@ -789,8 +898,6 @@ function init(event) {
         }
     );
     // var stageData = JSON.parse(data);
-    //
-
     // var gui = new dat.GUI();
     // gui.add(cannon.params, "horizontalAngle", -Math.PI / 2, 0.0);
     // gui.add(cannon.params, "shellVelocity", 100, 500);
@@ -825,10 +932,9 @@ function handleMouseUp() {
         var selectUnit = engine.selectedUnit(index);
         if (selectUnit && engine.state == 'pending') {
             engine.state = 'selected';
-        } else if(groundMesh.geometry.faces[res.faceIndex].materialIndex == 2){//selected state
+        } else if (groundMesh.geometry.faces[res.faceIndex].materialIndex == 2) {//selected state
             engine.state = 'unitMove';
-            console.log( findPath(game.map, engine.current.index,index));
-        } else if(groundMesh.geometry.faces[res.faceIndex].materialIndex == 3){//
+        } else if (groundMesh.geometry.faces[res.faceIndex].materialIndex == 3) {//
             engine.state = 'unitFire';
         } else {
             engine.state = 'pending';

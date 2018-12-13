@@ -3,7 +3,7 @@
 	"width":100,
 	"height":100,
 	"block":[],
-	"user":[{"type":"tank","index":[0,5]},{"type":"cannon","index":[1,5]}],
+	"user":[{"type":"tank","index":[0,5]},{"type":"cannon","index":[3,5]}],
 	"ennemies":[{"unit":"tank","index":[10,3]},{"unit":"cannon","index":[10,5]}],
 	"stuff":[
 		
