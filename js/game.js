@@ -37,7 +37,7 @@ class Engine {
     driveUnit() {
         if (this.state == 'unitMove') {
             // this.current.mesh.position.copy(toPosition(this.targetIndex));
-            var routes = this.routeUnit(game.map,this.current.index,this.targetIndex);
+            var routes = findPath(game.map,this.current.index,this.targetIndex);
             this.current.move(routes);
             // this.current.index = this.targetIndex;
             return this.calFireRange(this.targetIndex, this.current.fireRadius);
@@ -46,101 +46,6 @@ class Engine {
             return;
         }
     }
-
-    routeUnit(map, start, end) {
-        var width = map[0].length;
-        var height = map.length;
-        var size = width * height;
-        var distance = function(){
-            return Math.max(Math.abs(start.x - end.x), Math.abs(start.y - end.y));
-        };
-        var can_walk = function (x, y) {
-            var res = map[x] != null && map[x][y] != null && (map[x][y] == 0);
-            return res;
-        };
-        var getNeighbours = function (x, y) {
-            // North South East West
-            var N = y + 1;
-            var S = y - 1;
-            var E = x - 1;
-            var W = x + 1;
-            // Check we don't go off the map or hit a wall
-            var myN = N > -1 && can_walk(x, N);
-            var myS = S < height && can_walk(x, S);
-            var myE = E < width && can_walk(E, y);
-            var myW = W > -1 && can_walk(W, y);
-            // Results
-            var result = [];
-            if (myN) result.push({ x: x, y: N });
-            if (myE) result.push({ x: E, y: y });
-            if (myS) result.push({ x: x, y: S });
-            if (myW) result.push({ x: W, y: y });
-            return result;
-        };
-        function Node(Parent, Point) {
-            var node = {
-                Parent: Parent,
-                value: Point.x + (Point.y * width),
-                x: Point.x,
-                y: Point.y,
-                f: 0,
-                g: 0
-            };
-            return node;
-        }
-        function calculatePath() {
-            var p_start = Node(null, {
-                x: start[0],
-                y: start[1]
-            });
-            var p_end = Node(null, {
-                x: end[0],
-                y: end[1]
-            });
-            var AStar = new Array(size);
-            var open = [p_start];
-            var closed = [];
-            var result = [];
-            var neighbours, curr_node, curr_path;
-            var length, max, min, i, j;
-            while (length = open.length) {
-                max = size;
-                min = -1;
-                for (var i = 0; i < length; i++) {
-                    if (open[i].f < max) {
-                        max = open[i].f;
-                        min = i;
-                    }
-                }
-                curr_node = open.splice(min, 1)[0];
-                if (curr_node.value === p_end.value) {
-                    curr_path = closed[closed.push(curr_node) - 1];
-                    do {
-                        result.push([curr_path.x, curr_path.y]);
-                    }
-                    while (curr_path = curr_path.Parent) {
-                        AStar = closed = open = [];
-                        result.reverse();
-                    }
-                } else {
-                    neighbours = getNeighbours(curr_node.x, curr_node.y);
-                    for (var i = 0, j = neighbours.length; i < j; i++) {
-                        curr_path = Node(curr_node, neighbours[i]);
-                        if (!AStar[curr_path.value]) {
-                            curr_path.g = curr_node.g + distance(neighbours[i], curr_node);
-                            curr_path.f = curr_path.g + distance(neighbours[i], p_end);
-                            open.push(curr_path);
-                            AStar[curr_path.value] = true;
-                        }
-                    }
-                    closed.push(curr_node);
-                }
-            }
-            return result;
-        }
-        return calculatePath();
-    }
-
     driveAllUnit(units) { }
     selectedUnit(pos) {
         var select;
@@ -478,7 +383,6 @@ class Shell {
     }
 }
 
-
 class EnnemiesHolder {
     constructor() {
         this.mesh = new THREE.Object3D();
@@ -604,7 +508,6 @@ class Tank {
                 object.receiveShadow = true;
             }
         });
-        this.mesh.rotation.y += Math.PI;
         this.mesh.scale.set(.5, .5, .5);
     }
     hit() {
@@ -617,15 +520,21 @@ class Tank {
             ease: Bounce.easeOut
         }).reverse(.5);
     }
-    move(route) {
+    move(routes) {
         // for (var i = 0; i < this.wheels.length; i++) {
         //     this.wheels[i].rotation.z -= 0.1;
         // }
         // this.mesh.position.z += this.speed;
-        var targetPos = toPosition(route[route.length - 1]);
-        TweenMax.to(this.mesh.position,1*route.length,{
-            x:targetPos.x,
-            z:targetPos.z
+        // var targetPos = toPosition(route[route.length - 1]);
+        var moveLine = new TimelineLite();
+        console.log(routes);
+        var previous = toPosition(routes.shift());
+        var isx = toPosition(routes.shift()).x != previous.x;
+        routes.forEach(route => {
+            var stepPos =  toPosition(route);
+            if(isx != (stepPos.x !=  previous.x)){
+                moveLine.add(TweenLite.to(this.mesh.position,1,{x:previous.x}));
+            }
         });
     }
 
