@@ -36,15 +36,14 @@ class Engine {
     }
     driveUnit() {
         if (this.state == 'unitMove') {
-            // this.current.mesh.position.copy(toPosition(this.targetIndex));
-            var routes = findPath(game.map,this.current.index,this.targetIndex);
+            var routes = findPath(game.map, this.current.index, this.targetIndex);
             this.current.move(routes);
-            // this.current.index = this.targetIndex;
-            return this.calFireRange(this.targetIndex, this.current.fireRadius);
-        } else if (this.state == 'unitFire') {
-            this.current.shoot();
-            return;
+            this.state = 'pendingFire';
         }
+        // else if (this.state == 'unitFire') {
+        //     this.current.shoot();
+        //     return;
+        // }
     }
     driveAllUnit(units) { }
     selectedUnit(pos) {
@@ -130,8 +129,8 @@ class Engine {
                 break;
             case "selected":
                 var result = engine.calMoveRange(game.map, this.current.index, this.current.moveRadius);
-                if (!result || result.length == 0) {
-                    this.state = "penddingFire";
+                if (!result || result.length == 1) {
+                    this.state = "pendingFire";
                     return;
                 }
                 battleMapMesh.geometry.groupsNeedUpdate = true;
@@ -146,9 +145,8 @@ class Engine {
                 break;
             case "unitMove":
                 this.driveUnit();
-                this.state = "penddingFire";
                 break;
-            case "penddingFire":
+            case "pendingFire":
                 var fireRange = this.calFireRange(this.targetIndex, this.current.fireRadius);
                 battleMapMesh.geometry.groupsNeedUpdate = true;
                 battleMapMesh.geometry.faces.forEach(face => {
@@ -189,8 +187,8 @@ function createScene() {
     );
     scene.fog = new THREE.Fog(0xf7d9aa, 100, 950);
     camera.position.x = 100;
-    camera.position.z = 200;
-    camera.position.y = 50;
+    camera.position.z = 100;
+    camera.position.y = 100;
     camera.lookAt(new THREE.Vector3(-50, 0, 0));
     renderer = new THREE.WebGLRenderer({
         alpha: true,
@@ -244,7 +242,7 @@ class Cannon {
             shellVelocity: 300,
             verticalAngle: 0
         };
-        this.fireRadius = 5;
+        this.fireRadius = 3;
         this.g = 10;
         var baseRadiusTop = 10;
         var baseRadiusBottom = 10;
@@ -291,9 +289,6 @@ class Cannon {
             }
         });
         this.mesh.scale.set(.5, .5, .5);
-        // var box = new THREE.BoxHelper( this.mesh, 0xffff00 );
-        // scene.add( box );
-        // this.mesh.
     }
     update() {
         var t = this.clock.getDelta();
@@ -348,13 +343,14 @@ class Cannon {
     }
     shoot() {
         this.mesh.updateMatrixWorld();
-        if (!this.fireframe) {
+        console.log('shoot');
+        // if (!this.fireframe) {
             var tubeTopMesh = this.mesh.getObjectByName('tubeTopMesh');
             var shell = new Shell(tubeTopMesh.getWorldPosition(new THREE.Vector3()), this.params.horizontalAngle, this.params.verticalAngle);
             scene.add(shell.mesh);
             this.shells.push(shell);
             this.fireframe = 10;
-        }
+        // }
     }
 }
 
@@ -413,7 +409,8 @@ class EnnemiesHolder {
 
 class Tank {
     constructor() {
-        this.moveRadius = 5;
+        this.direction = new THREE.Vector3(1, 0, 0);
+        this.moveRadius = 3;
         this.fireRadius = 3;
         this.mesh = new THREE.Object3D();
         this.wheels = [];
@@ -508,6 +505,7 @@ class Tank {
                 object.receiveShadow = true;
             }
         });
+        // this.mesh.rotation.y += Math.PI;
         this.mesh.scale.set(.5, .5, .5);
     }
     hit() {
@@ -520,22 +518,57 @@ class Tank {
             ease: Bounce.easeOut
         }).reverse(.5);
     }
-    move(routes) {
-        // for (var i = 0; i < this.wheels.length; i++) {
-        //     this.wheels[i].rotation.z -= 0.1;
-        // }
-        // this.mesh.position.z += this.speed;
-        // var targetPos = toPosition(route[route.length - 1]);
-        var moveLine = new TimelineLite();
-        console.log(routes);
+    move(routes, callback) {
+        var moveTimeLine = new TimelineLite();
         var previous = toPosition(routes.shift());
-        var isx = toPosition(routes.shift()).x != previous.x;
+        var routeArray = [];
         routes.forEach(route => {
-            var stepPos =  toPosition(route);
-            if(isx != (stepPos.x !=  previous.x)){
-                moveLine.add(TweenLite.to(this.mesh.position,1,{x:previous.x}));
+            var stepPos = toPosition(route);
+            if (stepPos.x != previous.x) {
+                if (routeArray.length && routeArray[routeArray.length - 1].x) {
+                    routeArray[routeArray.length - 1].x += (stepPos.x - previous.x);
+                } else {
+                    var angle = "-=" + Math.PI / 2;
+                    if (stepPos.x > previous.x) {
+                        angle = "-=" + Math.PI / 2;
+                    }
+                    routeArray.push({ x: stepPos.x - previous.x, agl: angle });
+                }
+            } else {
+                if (routeArray.length && routeArray[routeArray.length - 1].z) {
+                    routeArray[routeArray.length - 1].z += (stepPos.z - previous.z);
+                } else {
+                    var angle = "-=" + Math.PI / 2;
+                    if (stepPos.x > previous.x) {
+                        angle = "-=" + Math.PI / 2;
+                    }
+                    routeArray.push({ z: stepPos.z - previous.z, agl: angle });
+                }
             }
+            previous = stepPos;
         });
+        routeArray.forEach(route => {
+            var vars = {};
+            var routeDirection;
+            if (route.x) {
+                vars.x = "+=" + route.x
+                routeDirection = new THREE.Vector3(route.x, 0, 0).normalize();
+            } else if (route.z) {
+                vars.z = "+=" + route.z
+                routeDirection = new THREE.Vector3(0, 0, route.z).normalize();
+            }
+            var angle = this.direction.angleTo(routeDirection);
+            var dirProject = this.direction.clone().cross(routeDirection);
+            this.direction = routeDirection;
+            if (dirProject.y > 0) {
+                moveTimeLine.add(TweenLite.to(this.mesh.rotation, .1, { y: "+=" + angle }));
+            } else {
+                moveTimeLine.add(TweenLite.to(this.mesh.rotation, .1, { y: "-=" + angle }));
+            }
+            moveTimeLine.add(TweenLite.to(this.mesh.position, .5, vars));
+        });
+        // callback();
+        // moveTimeLine.call(callback);
     }
 
     shoot() {
