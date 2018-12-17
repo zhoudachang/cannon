@@ -38,7 +38,7 @@ class Engine {
         if (this.state == 'unitMove') {
             var routes = findPath(game.map, this.current.index, this.targetIndex);
             this.current.move(routes);
-            this.state = 'pendingFire';
+            // this.state = 'pendingFire';
         }
         // else if (this.state == 'unitFire') {
         //     this.current.shoot();
@@ -145,6 +145,7 @@ class Engine {
                 break;
             case "unitMove":
                 this.driveUnit();
+                this.state = "moving";
                 break;
             case "pendingFire":
                 var fireRange = this.calFireRange(this.targetIndex, this.current.fireRadius);
@@ -568,7 +569,9 @@ class Tank {
             moveTimeLine.add(TweenLite.to(this.mesh.position, .5, vars));
         });
         // callback();
-        // moveTimeLine.call(callback);
+        moveTimeLine.call(() => {
+            engine.state = 'pendingFire';
+        });
     }
 
     shoot() {
