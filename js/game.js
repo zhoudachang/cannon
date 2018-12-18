@@ -1,9 +1,29 @@
-var whiteMat = new THREE.MeshLambertMaterial({ color: 0xfaf3d7, flatShading: THREE.FlatShading });
-var blackMat = new THREE.MeshPhongMaterial({ color: 0x403133, flatShading: THREE.FlatShading, side: THREE.DoubleSide });
-var yellowMat = new THREE.MeshLambertMaterial({ color: 0xfdd276, flatShading: THREE.FlatShading });
-var brownMat = new THREE.MeshLambertMaterial({ color: 0x9db3b5, side: THREE.DoubleSide });
-var greenMat = new THREE.MeshLambertMaterial({ color: 0xf0fff0, flatShading: THREE.FlatShading, side: THREE.DoubleSide });
-var redMat = new THREE.MeshLambertMaterial({ flatShading: THREE.FlatShading, color: 0xcd3700 });
+var whiteMat = new THREE.MeshLambertMaterial({
+    color: 0xfaf3d7,
+    flatShading: THREE.FlatShading
+});
+var blackMat = new THREE.MeshPhongMaterial({
+    color: 0x403133,
+    flatShading: THREE.FlatShading,
+    side: THREE.DoubleSide
+});
+var yellowMat = new THREE.MeshLambertMaterial({
+    color: 0xfdd276,
+    flatShading: THREE.FlatShading
+});
+var brownMat = new THREE.MeshLambertMaterial({
+    color: 0x9db3b5,
+    side: THREE.DoubleSide
+});
+var greenMat = new THREE.MeshLambertMaterial({
+    color: 0xf0fff0,
+    flatShading: THREE.FlatShading,
+    side: THREE.DoubleSide
+});
+var redMat = new THREE.MeshLambertMaterial({
+    flatShading: THREE.FlatShading,
+    color: 0xcd3700
+});
 
 var particlesPool = [];
 var particlesInUse = [];
@@ -45,7 +65,7 @@ class Engine {
         //     return;
         // }
     }
-    driveAllUnit(units) { }
+    driveAllUnit(units) {}
     selectedUnit(pos) {
         var select;
         this.units.forEach(item => {
@@ -91,9 +111,9 @@ class Engine {
         var checkRange = function (node, tempList) {
             var route = Math.abs(node[0] - index[0]) + Math.abs(node[1] - index[1]);
             if (route <= radius) {
-                if (!rangeList.find(e => e[0] == node[0] && e[1] == node[1])
-                    && node[0] < 10 && node[1] < 10 && node[0] >= 0 && node[1] >= 0
-                    && map[node[0]][node[1]] != null && map[node[0]][node[1]] == 0) {
+                if (!rangeList.find(e => e[0] == node[0] && e[1] == node[1]) &&
+                    node[0] < 10 && node[1] < 10 && node[0] >= 0 && node[1] >= 0 &&
+                    map[node[0]][node[1]] != null && map[node[0]][node[1]] == 0) {
                     rangeList.push(node);
                     tempList.push(node);
                 }
@@ -344,14 +364,23 @@ class Cannon {
     }
     shoot() {
         this.mesh.updateMatrixWorld();
-        console.log('shoot');
-        // if (!this.fireframe) {
-            var tubeTopMesh = this.mesh.getObjectByName('tubeTopMesh');
-            var shell = new Shell(tubeTopMesh.getWorldPosition(new THREE.Vector3()), this.params.horizontalAngle, this.params.verticalAngle);
-            scene.add(shell.mesh);
-            this.shells.push(shell);
-            this.fireframe = 10;
-        // }
+        var f = getParticle();
+        var tubeTopMesh = this.mesh.getObjectByName('tubeTopMesh');
+        console.log(tubeTopMesh.position,tubeTopMesh.getWorldPosition(new THREE.Vector3(0, 0, 0)))
+        f.mesh.position.copy(tubeTopMesh.getWorldPosition(new THREE.Vector3(0, 0, 0)));
+        // f.mesh.position.x -= 20;
+        // f.mesh.position.y += 10;
+        console.log(f.mesh.position);
+        f.color = {
+            r: 255 / 255,
+            g: 205 / 255,
+            b: 74 / 255
+        };
+        f.mesh.material.color.setRGB(f.color.r, f.color.g, f.color.b);
+        f.mesh.material.opacity = 1;
+        // this.mesh.add(f.mesh);
+        this.mesh.parent.add(f.mesh);
+        f.fire(2.5, 1);
     }
 }
 
@@ -506,7 +535,6 @@ class Tank {
                 object.receiveShadow = true;
             }
         });
-        // this.mesh.rotation.y += Math.PI;
         this.mesh.scale.set(.5, .5, .5);
     }
     hit() {
@@ -533,7 +561,10 @@ class Tank {
                     if (stepPos.x > previous.x) {
                         angle = "-=" + Math.PI / 2;
                     }
-                    routeArray.push({ x: stepPos.x - previous.x, agl: angle });
+                    routeArray.push({
+                        x: stepPos.x - previous.x,
+                        agl: angle
+                    });
                 }
             } else {
                 if (routeArray.length && routeArray[routeArray.length - 1].z) {
@@ -543,7 +574,10 @@ class Tank {
                     if (stepPos.x > previous.x) {
                         angle = "-=" + Math.PI / 2;
                     }
-                    routeArray.push({ z: stepPos.z - previous.z, agl: angle });
+                    routeArray.push({
+                        z: stepPos.z - previous.z,
+                        agl: angle
+                    });
                 }
             }
             previous = stepPos;
@@ -562,9 +596,13 @@ class Tank {
             var dirProject = this.direction.clone().cross(routeDirection);
             this.direction = routeDirection;
             if (dirProject.y > 0) {
-                moveTimeLine.add(TweenLite.to(this.mesh.rotation, .1, { y: "+=" + angle }));
+                moveTimeLine.add(TweenLite.to(this.mesh.rotation, .1, {
+                    y: "+=" + angle
+                }));
             } else {
-                moveTimeLine.add(TweenLite.to(this.mesh.rotation, .1, { y: "-=" + angle }));
+                moveTimeLine.add(TweenLite.to(this.mesh.rotation, .1, {
+                    y: "-=" + angle
+                }));
             }
             moveTimeLine.add(TweenLite.to(this.mesh.position, .5, vars));
         });
@@ -615,6 +653,7 @@ class Particle {
         this.mesh.scale.z = 1;
         // this.mesh.material.opacity = .5;
         particlesPool.unshift(this);
+        console.log('Particle initialize');
     }
     updateColor() {
         this.mesh.material.color.setRGB(this.color.r, this.color.g, this.color.b);
@@ -805,7 +844,9 @@ function init(event) {
             var stageData = JSON.parse(data);
             game.stageWidth = stageData.width;
             game.stageHeight = stageData.height;
-            game.map = [[]];
+            game.map = [
+                []
+            ];
             for (var x = 0; x < game.segmentsLength; x++) {
                 game.map[x] = [];
                 for (var y = 0; y < game.segmentsLength; y++) {
@@ -877,9 +918,9 @@ function handleMouseUp() {
         var selectUnit = engine.selectedUnit(index);
         if (selectUnit && engine.state == 'pending') {
             engine.state = 'selected';
-        } else if (groundMesh.geometry.faces[res.faceIndex].materialIndex == 2) {//selected state
+        } else if (groundMesh.geometry.faces[res.faceIndex].materialIndex == 2) { //selected state
             engine.state = 'unitMove';
-        } else if (groundMesh.geometry.faces[res.faceIndex].materialIndex == 3) {//
+        } else if (groundMesh.geometry.faces[res.faceIndex].materialIndex == 3) { //
             engine.state = 'unitFire';
         } else {
             engine.state = 'pending';
