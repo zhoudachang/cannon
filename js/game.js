@@ -263,6 +263,7 @@ class Cannon {
             shellVelocity: 300,
             verticalAngle: 0
         };
+        this.direction = new THREE.Vector3(-1,0,0);
         this.fireRadius = 3;
         this.g = 10;
         var baseRadiusTop = 10;
@@ -362,25 +363,27 @@ class Cannon {
             this.fireframe--;
         }
     }
-    shoot() {
+    shoot(target) {
         this.mesh.updateMatrixWorld();
-        var f = getParticle();
         var tubeTopMesh = this.mesh.getObjectByName('tubeTopMesh');
-        console.log(tubeTopMesh.position,tubeTopMesh.getWorldPosition(new THREE.Vector3(0, 0, 0)))
-        f.mesh.position.copy(tubeTopMesh.getWorldPosition(new THREE.Vector3(0, 0, 0)));
-        // f.mesh.position.x -= 20;
-        // f.mesh.position.y += 10;
-        console.log(f.mesh.position);
-        f.color = {
-            r: 255 / 255,
-            g: 205 / 255,
-            b: 74 / 255
-        };
-        f.mesh.material.color.setRGB(f.color.r, f.color.g, f.color.b);
-        f.mesh.material.opacity = 1;
-        // this.mesh.add(f.mesh);
-        this.mesh.parent.add(f.mesh);
-        f.fire(2.5, 1);
+        console.log(this.direction)
+        const tubePos = tubeTopMesh.getWorldPosition(new THREE.Vector3(0, 0, 0));
+
+        for(var i=0;i<20;i++){
+            var f = getParticle();
+            f.mesh.position.copy(tubePos);
+            f.mesh.translateOnAxis(this.direction,1);
+            f.color = {
+                r: 255 / 255,
+                g: 205 / 255,
+                b: 74 / 255
+            };
+            f.mesh.material.color.setRGB(f.color.r, f.color.g, f.color.b);
+            f.mesh.material.opacity = 1;
+            this.mesh.parent.add(f.mesh);
+            var delay = 0.1;
+            f.fire(2.5, 1,delay);
+        }
     }
 }
 
@@ -606,14 +609,13 @@ class Tank {
             }
             moveTimeLine.add(TweenLite.to(this.mesh.position, .5, vars));
         });
-        // callback();
         moveTimeLine.call(() => {
             engine.state = 'pendingFire';
         });
     }
 
     shoot() {
-        console.log('tank.shot');
+        //console.log('tank.shot');
     }
 }
 
@@ -653,7 +655,6 @@ class Particle {
         this.mesh.scale.z = 1;
         // this.mesh.material.opacity = .5;
         particlesPool.unshift(this);
-        console.log('Particle initialize');
     }
     updateColor() {
         this.mesh.material.color.setRGB(this.color.r, this.color.g, this.color.b);
@@ -706,22 +707,22 @@ class Particle {
             ease: Strong.easeOut
         });
     }
-    fire(f, speed) {
-        var maxSneezingRate = 8;
+    fire(f, speed,delay) {
+        var maxSneezingRate = 20;
         var initX = this.mesh.position.x;
         var initY = this.mesh.position.y;
         var initZ = this.mesh.position.z;
         TweenMax.to(this.mesh.position, speed, {
             z: initZ,
-            y: initY + 4,
+            y: initY + 5,
             x: initX - 5,
             ease: Strong.easeOut
-        });
+        }).delay(delay);
         TweenMax.to(this.mesh.rotation, speed, {
             x: Math.random() * Math.PI * 3,
             y: Math.random() * Math.PI * 3,
             ease: Strong.easeOut
-        });
+        }).delay(delay);
         var bezierScale = [{
             x: 1,
             y: 1,
@@ -747,11 +748,11 @@ class Particle {
             bezier: bezierScale,
             ease: Strong.easeOut,
             onComplete: () => this.initialize()
-        });
+        }).delay(delay);
         TweenMax.to(this.mesh.material, speed, {
             opacity: 0,
             ease: Strong.easeOut
-        });
+        }).delay(delay);
         var bezierColor = [{
             r: 255 / 255,
             g: 205 / 255,
@@ -777,7 +778,7 @@ class Particle {
             bezier: bezierColor,
             ease: Strong.easeOut,
             onUpdate: () => this.updateColor()
-        });
+        }).delay(delay);
     }
 }
 
