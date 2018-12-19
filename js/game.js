@@ -53,17 +53,24 @@ class Engine {
         this.units = [];
         this.current;
         this.targetIndex;
-        this.rootNode = new RootNode();
-        const topNode = new SequenceNode(this.rootNode);
-        const moveAction = new ActionNode(new ActionTask(() => {
-            console.log('move');
+        // this.rootNode = new RootNode();
+        // const topNode = new SequenceNode(this.rootNode);
+        // const moveAction = new ActionNode(new ActionTask(() => {
+        //     console.log('move');
+        // }));
+        // const attackAction = new ActionNode(new ActionTask(() => {
+        //     console.log('attack');
+        // }));
+        // topNode.addChild(moveAction);
+        // topNode.addChild(attackAction);
+        // this.rootNode.addChild(topNode);
+        BehaviorTree.register('bark', new BehaviorTree.Task({
+            title: 'bark',
+            run: function (dog) {
+                dog.bark();
+                this.success();
+            }
         }));
-        const attackAction = new ActionNode(new ActionTask(() => {
-            console.log('attack');
-        }));
-        topNode.addChild(moveAction);
-        topNode.addChild(attackAction);
-        this.rootNode.addChild(topNode);
     }
     driveUnit() {
         if (this.state == 'unitMove') {
@@ -76,7 +83,7 @@ class Engine {
         //     return;
         // }
     }
-    driveAllUnit(units) {}
+    driveAllUnit(units) { }
     selectedUnit(pos) {
         var select;
         this.units.forEach(item => {
@@ -150,7 +157,6 @@ class Engine {
     }
 
     update() {
-        this.rootNode.tick();   
         var battleMapMesh = scene.getObjectByName('ground');
         switch (this.state) {
             case "pending":
@@ -275,7 +281,7 @@ class Cannon {
             shellVelocity: 300,
             verticalAngle: 0
         };
-        this.direction = new THREE.Vector3(-1,0,0);
+        this.direction = new THREE.Vector3(-1, 0, 0);
         this.fireRadius = 3;
         this.g = 10;
         var baseRadiusTop = 10;
@@ -381,10 +387,10 @@ class Cannon {
         console.log(this.direction)
         const tubePos = tubeTopMesh.getWorldPosition(new THREE.Vector3(0, 0, 0));
 
-        for(var i=0;i<20;i++){
+        for (var i = 0; i < 20; i++) {
             var f = getParticle();
             f.mesh.position.copy(tubePos);
-            f.mesh.translateOnAxis(this.direction,1);
+            f.mesh.translateOnAxis(this.direction, 1);
             f.color = {
                 r: 255 / 255,
                 g: 205 / 255,
@@ -394,7 +400,7 @@ class Cannon {
             f.mesh.material.opacity = 1;
             this.mesh.parent.add(f.mesh);
             var delay = 0.1;
-            f.fire(2.5, 1,delay);
+            f.fire(2.5, 1, delay);
         }
     }
 }
@@ -719,7 +725,7 @@ class Particle {
             ease: Strong.easeOut
         });
     }
-    fire(f, speed,delay) {
+    fire(f, speed, delay) {
         var maxSneezingRate = 20;
         var initX = this.mesh.position.x;
         var initY = this.mesh.position.y;
