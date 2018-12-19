@@ -53,6 +53,17 @@ class Engine {
         this.units = [];
         this.current;
         this.targetIndex;
+        this.rootNode = new RootNode();
+        const topNode = new SequenceNode(this.rootNode);
+        const moveAction = new ActionNode(new ActionTask(() => {
+            console.log('move');
+        }));
+        const attackAction = new ActionNode(new ActionTask(() => {
+            console.log('attack');
+        }));
+        topNode.addChild(moveAction);
+        topNode.addChild(attackAction);
+        this.rootNode.addChild(topNode);
     }
     driveUnit() {
         if (this.state == 'unitMove') {
@@ -139,6 +150,7 @@ class Engine {
     }
 
     update() {
+        this.rootNode.tick();   
         var battleMapMesh = scene.getObjectByName('ground');
         switch (this.state) {
             case "pending":
