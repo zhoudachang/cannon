@@ -26,13 +26,13 @@
             this.state = 'isFiring';
         }
         var unit = new Unit();
-        // BehaviorTree.register('move', new BehaviorTree.Task({
-        //     title: 'move',
-        //     run: function (unit) {
-        //         unit.move();
-        //         this.success();
-        //     }
-        // }));
+        BehaviorTree.register('move', new BehaviorTree.Task({
+            title: 'move',
+            run: function (unit) {
+                unit.move();
+                this.running();
+            }
+        }));
         var myselector = new BehaviorTree.Priority({
             title: 'my selector',
             nodes: [

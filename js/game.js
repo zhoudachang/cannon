@@ -43,7 +43,47 @@ var HEIGHT, WIDTH, mousePos = {
     x: 0,
     y: 0
 };
-
+BehaviorTree.register('move-fire', new BehaviorTree.Task({
+    title: 'move-fire',
+    start: function(obj) { obj.isStarted = true; },
+    end: function(obj) { obj.isStarted = false; },
+    run: function (unit) {
+        if(!unit.flag){
+            engine.current = unit;
+            var moveRange = engine.calMoveRange(game.map, unit.index, unit.moveRadius);
+            engine.targetIndex = moveRange[moveRange.length - 1];
+            engine.driveUnit(() => {
+                unit.flag = 1;
+                console.log('action finished');
+                this.success();
+            });
+            this.running();
+        } else {
+            this.fail();
+        }
+    }
+}));
+BehaviorTree.register('fire', new BehaviorTree.Task({
+    title: 'fire',
+    run: function (unit) {
+        console.log('fire');
+        this.success();
+    }
+}));
+BehaviorTree.register('move', new BehaviorTree.Task({
+    title: 'move',
+    run: function (unit) {
+        console.log('move');
+        this.success();
+    }
+}));
+BehaviorTree.register('idle', new BehaviorTree.Task({
+    title: 'idle',
+    run: function (unit) {
+        console.log('move');
+        this.success();
+    }
+}));
 class Engine {
     constructor() {
         //pending - selected - unitMove - penddingFire - unitFire - over - pending
@@ -54,32 +94,6 @@ class Engine {
         this.units = [];
         this.current;
         this.targetIndex;
-        BehaviorTree.register('move-fire', new BehaviorTree.Task({
-            title: 'move-fire',
-            run: function (unit) {
-                var moveRange = engine.calMoveRange(this.map, unit.index, unit.moveRadius);
-                console.log(moveRange);
-                this.success();
-            }
-        }));
-        BehaviorTree.register('fire', new BehaviorTree.Task({
-            title: 'fire',
-            run: function (unit) {
-                this.success();
-            }
-        }));
-        BehaviorTree.register('move', new BehaviorTree.Task({
-            title: 'move',
-            run: function (unit) {
-                this.success();
-            }
-        }));
-        BehaviorTree.register('idle', new BehaviorTree.Task({
-            title: 'idle',
-            run: function (unit) {
-                this.success();
-            }
-        }));
         this.btree = new BehaviorTree({
             title: 'enemy action',
             tree: new BehaviorTree.Priority({
@@ -90,10 +104,11 @@ class Engine {
         });
 
     }
-    driveUnit() {
+    driveUnit(callback) {
+        this.isWorking = true;
         if (this.state == 'unitMove') {
             var routes = findPath(game.map, this.current.index, this.targetIndex);
-            this.current.move(routes);
+            this.current.move(routes,callback);
             // this.state = 'pendingFire';
         }
     }
@@ -190,7 +205,10 @@ class Engine {
                     break;
                 }
             }
-            this.btree.step();
+            if(ennemy){
+                console.log('step');
+                this.btree.step();
+            }
         } else {
             switch (this.state) {
                 case "pending":
@@ -661,6 +679,9 @@ class Tank {
             moveTimeLine.add(TweenLite.to(this.mesh.position, .5, vars));
         });
         moveTimeLine.call(() => {
+            if(callback){
+                callback();
+            }
             engine.state = 'pendingFire';
         });
     }
@@ -928,23 +949,6 @@ function init(event) {
             createLights();
             placeUnit(stageData.user,engine.units);
             placeUnit(stageData.ennemies,engine.ennemies);
-            // stageData.user.forEach(unit => {
-            //     if (unit.type == 'tank') {
-            //         var tank = new Tank();
-            //         tank.mesh.position.copy(toPosition(unit.index));
-            //         tank.index = unit.index;
-            //         scene.add(tank.mesh);
-            //         engine.units.push(tank);
-            //     } else if (unit.type == 'cannon') {
-            //         var cannon = new Cannon();
-            //         cannon.mesh.position.copy(toPosition(unit.index));
-            //         cannon.index = unit.index;
-            //         scene.add(cannon.mesh);
-            //         engine.units.push(cannon);
-            //         game.map[unit.index[0]][unit.index[1]] = 1;
-            //     }
-            // });
-            // createCannon();
             loop();
         },
         // onProgress callback
