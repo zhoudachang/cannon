@@ -37,6 +37,7 @@ var raycaster = new THREE.Raycaster();
 var mouseVector = new THREE.Vector3();
 
 var scene, camera, renderer, controls;
+var engine, cannon, tank;
 var ambientLight, hemisphereLight, shadowLight;
 var HEIGHT, WIDTH, mousePos = {
     x: 0,
@@ -53,24 +54,41 @@ class Engine {
         this.units = [];
         this.current;
         this.targetIndex;
-        // this.rootNode = new RootNode();
-        // const topNode = new SequenceNode(this.rootNode);
-        // const moveAction = new ActionNode(new ActionTask(() => {
-        //     console.log('move');
-        // }));
-        // const attackAction = new ActionNode(new ActionTask(() => {
-        //     console.log('attack');
-        // }));
-        // topNode.addChild(moveAction);
-        // topNode.addChild(attackAction);
-        // this.rootNode.addChild(topNode);
-        BehaviorTree.register('bark', new BehaviorTree.Task({
-            title: 'bark',
-            run: function (dog) {
-                dog.bark();
+        BehaviorTree.register('move-fire', new BehaviorTree.Task({
+            title: 'move-fire',
+            run: function (unit) {
+                var moveRange = engine.calMoveRange(this.map, unit.index, unit.moveRadius);
+                console.log(moveRange);
                 this.success();
             }
         }));
+        BehaviorTree.register('fire', new BehaviorTree.Task({
+            title: 'fire',
+            run: function (unit) {
+                this.success();
+            }
+        }));
+        BehaviorTree.register('move', new BehaviorTree.Task({
+            title: 'move',
+            run: function (unit) {
+                this.success();
+            }
+        }));
+        BehaviorTree.register('idle', new BehaviorTree.Task({
+            title: 'idle',
+            run: function (unit) {
+                this.success();
+            }
+        }));
+        this.btree = new BehaviorTree({
+            title: 'enemy action',
+            tree: new BehaviorTree.Priority({
+                nodes: [
+                    'move-fire', 'fire', 'move', 'idle'
+                ]
+            })
+        });
+
     }
     driveUnit() {
         if (this.state == 'unitMove') {
@@ -78,12 +96,8 @@ class Engine {
             this.current.move(routes);
             // this.state = 'pendingFire';
         }
-        // else if (this.state == 'unitFire') {
-        //     this.current.shoot();
-        //     return;
-        // }
     }
-    driveAllUnit(units) { }
+    driveAllUnit(units) {}
     selectedUnit(pos) {
         var select;
         this.units.forEach(item => {
@@ -156,61 +170,80 @@ class Engine {
         return rangeList;
     }
 
+    controlSide() {
+        for (var i = 0; i < this.units.length; i++) {
+            if (!this.units[i].flag) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     update() {
         var battleMapMesh = scene.getObjectByName('ground');
-        switch (this.state) {
-            case "pending":
-                battleMapMesh.geometry.groupsNeedUpdate = true;
-                battleMapMesh.geometry.faces.forEach(face => {
-                    face.materialIndex = 0;
-                });
-                break;
-            case "selected":
-                var result = engine.calMoveRange(game.map, this.current.index, this.current.moveRadius);
-                if (!result || result.length == 1) {
-                    this.state = "pendingFire";
-                    return;
+        if (!this.controlSide()) {
+            var ennemy;
+            for(var i=0;i<this.ennemies.length;i++){
+                if(!this.ennemies[i].flag){
+                    ennemy = this.ennemies[i];
+                    this.btree.setObject(ennemy);
+                    break;
                 }
-                battleMapMesh.geometry.groupsNeedUpdate = true;
-                result.forEach(pindex => {
-                    var faceIndex = toFaceIndex(pindex);
-                    if (faceIndex >= 0) {
-                        battleMapMesh.geometry.faces[faceIndex].materialIndex = 2;
-                        battleMapMesh.geometry.faces[faceIndex + 1].materialIndex = 2;
+            }
+            this.btree.step();
+        } else {
+            switch (this.state) {
+                case "pending":
+                    battleMapMesh.geometry.groupsNeedUpdate = true;
+                    battleMapMesh.geometry.faces.forEach(face => {
+                        face.materialIndex = 0;
+                    });
+                    break;
+                case "selected":
+                    var result = engine.calMoveRange(game.map, this.current.index, this.current.moveRadius);
+                    if (!result || result.length == 1) {
+                        this.state = "pendingFire";
+                        return;
                     }
-                });
-                this.state = "pendingMove";
-                break;
-            case "unitMove":
-                this.driveUnit();
-                this.state = "moving";
-                break;
-            case "pendingFire":
-                var fireRange = this.calFireRange(this.targetIndex, this.current.fireRadius);
-                battleMapMesh.geometry.groupsNeedUpdate = true;
-                battleMapMesh.geometry.faces.forEach(face => {
-                    face.materialIndex = 0;
-                });
-                if (fireRange) {
-                    fireRange.forEach(pindex => {
+                    battleMapMesh.geometry.groupsNeedUpdate = true;
+                    result.forEach(pindex => {
                         var faceIndex = toFaceIndex(pindex);
                         if (faceIndex >= 0) {
-                            battleMapMesh.geometry.faces[faceIndex].materialIndex = 3;
-                            battleMapMesh.geometry.faces[faceIndex + 1].materialIndex = 3;
+                            battleMapMesh.geometry.faces[faceIndex].materialIndex = 2;
+                            battleMapMesh.geometry.faces[faceIndex + 1].materialIndex = 2;
                         }
                     });
-                }
-                break;
-            case "unitFire":
-                this.current.shoot();
-                this.state = "pending";
-                break;
+                    this.state = "pendingMove";
+                    break;
+                case "unitMove":
+                    this.driveUnit();
+                    this.state = "moving";
+                    break;
+                case "pendingFire":
+                    var fireRange = this.calFireRange(this.targetIndex, this.current.fireRadius);
+                    battleMapMesh.geometry.groupsNeedUpdate = true;
+                    battleMapMesh.geometry.faces.forEach(face => {
+                        face.materialIndex = 0;
+                    });
+                    if (fireRange) {
+                        fireRange.forEach(pindex => {
+                            var faceIndex = toFaceIndex(pindex);
+                            if (faceIndex >= 0) {
+                                battleMapMesh.geometry.faces[faceIndex].materialIndex = 3;
+                                battleMapMesh.geometry.faces[faceIndex + 1].materialIndex = 3;
+                            }
+                        });
+                    }
+                    break;
+                case "unitFire":
+                    this.current.shoot();
+                    this.state = "pending";
+                    this.current.flag = true;
+                    break;
+            }
         }
     }
 }
-
-
-var engine, cannon, tank;
 
 function createScene() {
     HEIGHT = window.innerHeight;
@@ -854,6 +887,24 @@ function init(event) {
     // ennemiesHolder = new EnnemiesHolder()
     // scene.add(ennemiesHolder.mesh);
     var loader = new THREE.FileLoader();
+    var placeUnit = function (unitArr, engineContainer) {
+        unitArr.forEach(unit => {
+            var entity;
+            switch (unit.type) {
+                case "tank":
+                    entity = new Tank();
+                    break;
+                case "cannon":
+                    entity = new Cannon();
+                    break;    
+            }
+            entity.index = unit.index;
+            entity.mesh.position.copy(toPosition(unit.index));
+            scene.add(entity.mesh);
+            engineContainer.push(entity);
+            game.map[unit.index[0]][unit.index[1]] = 1;
+        });
+    };
     loader.load(
         // resource URL
         'stage/stage_1.json',
@@ -875,22 +926,24 @@ function init(event) {
             createScene();
             createGroud(game.stageWidth, game.stageHeight);
             createLights();
-            stageData.user.forEach(unit => {
-                if (unit.type == 'tank') {
-                    var tank = new Tank();
-                    tank.mesh.position.copy(toPosition(unit.index));
-                    tank.index = unit.index;
-                    scene.add(tank.mesh);
-                    engine.units.push(tank);
-                } else if (unit.type == 'cannon') {
-                    var cannon = new Cannon();
-                    cannon.mesh.position.copy(toPosition(unit.index));
-                    cannon.index = unit.index;
-                    scene.add(cannon.mesh);
-                    engine.units.push(cannon);
-                    game.map[unit.index[0]][unit.index[1]] = 1;
-                }
-            });
+            placeUnit(stageData.user,engine.units);
+            placeUnit(stageData.ennemies,engine.ennemies);
+            // stageData.user.forEach(unit => {
+            //     if (unit.type == 'tank') {
+            //         var tank = new Tank();
+            //         tank.mesh.position.copy(toPosition(unit.index));
+            //         tank.index = unit.index;
+            //         scene.add(tank.mesh);
+            //         engine.units.push(tank);
+            //     } else if (unit.type == 'cannon') {
+            //         var cannon = new Cannon();
+            //         cannon.mesh.position.copy(toPosition(unit.index));
+            //         cannon.index = unit.index;
+            //         scene.add(cannon.mesh);
+            //         engine.units.push(cannon);
+            //         game.map[unit.index[0]][unit.index[1]] = 1;
+            //     }
+            // });
             // createCannon();
             loop();
         },
