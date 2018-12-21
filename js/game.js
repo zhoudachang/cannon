@@ -45,15 +45,19 @@ var HEIGHT, WIDTH, mousePos = {
 };
 BehaviorTree.register('move-fire', new BehaviorTree.Task({
     title: 'move-fire',
-    start: function(obj) { obj.isStarted = true; },
-    end: function(obj) { obj.isStarted = false; },
+    start: function (obj) {
+        obj.isStarted = true;
+    },
+    end: function (obj) {
+        obj.isStarted = false;
+    },
     run: function (unit) {
-        if(!unit.flag){
+        if (!unit.flag) {
             engine.current = unit;
-            var moveRange = engine.calMoveRange(game.map, unit.index, unit.moveRadius);
+            var moveRange = calMoveRange(game.map, unit.index, unit.moveRadius);
             engine.targetIndex = moveRange[moveRange.length - 1];
             engine.driveUnit(() => {
-                unit.flag = 1;
+                unit.flag = true;
                 console.log('action finished');
                 this.success();
             });
@@ -89,7 +93,6 @@ class Engine {
         //pending - selected - unitMove - penddingFire - unitFire - over - pending
         this.state = 'pending';
         this.mode = 0;
-        this.isWorking = false;
         this.ennemies = [];
         this.units = [];
         this.current;
@@ -102,17 +105,44 @@ class Engine {
                 ]
             })
         });
-
     }
     driveUnit(callback) {
-        this.isWorking = true;
-        if (this.state == 'unitMove') {
+        if (!TweenMax.isTweening(this.current.mesh.position)) {
+            var moveTimeLine = new TimelineLite();
             var routes = findPath(game.map, this.current.index, this.targetIndex);
-            this.current.move(routes,callback);
-            // this.state = 'pendingFire';
+            var routeArray = tweenPath(routes);
+            routeArray.forEach(route => {
+                var vars = {};
+                var routeDirection;
+                if (route.x) {
+                    vars.x = "+=" + route.x
+                    routeDirection = new THREE.Vector3(route.x, 0, 0).normalize();
+                } else if (route.z) {
+                    vars.z = "+=" + route.z
+                    routeDirection = new THREE.Vector3(0, 0, route.z).normalize();
+                }
+                var angle = this.current.direction.angleTo(routeDirection);
+                var dirProject = this.current.direction.clone().cross(routeDirection);
+                this.current.direction = routeDirection;
+                if (dirProject.y > 0) {
+                    moveTimeLine.add(TweenLite.to(this.current.mesh.rotation, .1, {
+                        y: "+=" + angle
+                    }));
+                } else {
+                    moveTimeLine.add(TweenLite.to(this.current.mesh.rotation, .1, {
+                        y: "-=" + angle
+                    }));
+                }
+                moveTimeLine.add(TweenLite.to(this.current.mesh.position, .5, vars));
+            });
+            moveTimeLine.call(() => {
+                if (callback) {
+                    callback();
+                }
+                engine.state = 'pendingFire';
+            });
         }
     }
-    driveAllUnit(units) {}
     selectedUnit(pos) {
         var select;
         this.units.forEach(item => {
@@ -123,66 +153,6 @@ class Engine {
             }
         });
         return select;
-    }
-
-    calFireRange(targetIndex, radius) {
-        if (!radius) {
-            return;
-        }
-        var moveCount = radius * (4 + (radius - 1) * 2) + 1;
-        var deltaX = -radius;
-        var deltaY = 0;
-        var result = [];
-        for (var i = 0; i < moveCount; i++) {
-            if ((targetIndex[0] + deltaX) < 10 && (targetIndex[1] + deltaY) < 10) {
-                result.push([targetIndex[0] + deltaX, targetIndex[1] + deltaY]);
-            }
-            if ((Math.abs(deltaX) + Math.abs(deltaY) == radius) && deltaY >= 0) {
-                deltaX++;
-                deltaY = Math.abs(deltaX) - radius;
-            } else {
-                deltaY++;
-            }
-        }
-        return result;
-    }
-    calMoveRange(map, index, radius) {
-        var tempList = [
-            []
-        ];
-        tempList[0] = index;
-        var rangeList = [
-            []
-        ];
-        rangeList[0] = index;
-        var checkRange = function (node, tempList) {
-            var route = Math.abs(node[0] - index[0]) + Math.abs(node[1] - index[1]);
-            if (route <= radius) {
-                if (!rangeList.find(e => e[0] == node[0] && e[1] == node[1]) &&
-                    node[0] < 10 && node[1] < 10 && node[0] >= 0 && node[1] >= 0 &&
-                    map[node[0]][node[1]] != null && map[node[0]][node[1]] == 0) {
-                    rangeList.push(node);
-                    tempList.push(node);
-                }
-            }
-        }
-        var rangeScan = function () {
-            var tempList_ = [];
-            for (var i = 0; i < tempList.length; i++) {
-                var node = tempList[i];
-                checkRange([node[0], node[1] - 1], tempList_);
-                checkRange([node[0], node[1] + 1], tempList_);
-                checkRange([node[0] + 1, node[1]], tempList_);
-                checkRange([node[0] - 1, node[1]], tempList_);
-            }
-            return tempList_;
-        };
-        var countPoint = 0;
-        while (countPoint < radius) {
-            tempList = rangeScan();
-            countPoint++
-        }
-        return rangeList;
     }
 
     controlSide() {
@@ -198,39 +168,29 @@ class Engine {
         var battleMapMesh = scene.getObjectByName('ground');
         if (!this.controlSide()) {
             var ennemy;
-            for(var i=0;i<this.ennemies.length;i++){
-                if(!this.ennemies[i].flag){
+            for (var i = 0; i < this.ennemies.length; i++) {
+                if (!this.ennemies[i].flag) {
                     ennemy = this.ennemies[i];
                     this.btree.setObject(ennemy);
                     break;
                 }
             }
-            if(ennemy){
+            if (ennemy) {
                 console.log('step');
                 this.btree.step();
             }
         } else {
             switch (this.state) {
                 case "pending":
-                    battleMapMesh.geometry.groupsNeedUpdate = true;
-                    battleMapMesh.geometry.faces.forEach(face => {
-                        face.materialIndex = 0;
-                    });
+                    resetGround();
                     break;
                 case "selected":
-                    var result = engine.calMoveRange(game.map, this.current.index, this.current.moveRadius);
+                    var result = calMoveRange(game.map, this.current.index, this.current.moveRadius);
                     if (!result || result.length == 1) {
                         this.state = "pendingFire";
                         return;
                     }
-                    battleMapMesh.geometry.groupsNeedUpdate = true;
-                    result.forEach(pindex => {
-                        var faceIndex = toFaceIndex(pindex);
-                        if (faceIndex >= 0) {
-                            battleMapMesh.geometry.faces[faceIndex].materialIndex = 2;
-                            battleMapMesh.geometry.faces[faceIndex + 1].materialIndex = 2;
-                        }
-                    });
+                    renderGround(result, 2);
                     this.state = "pendingMove";
                     break;
                 case "unitMove":
@@ -238,29 +198,40 @@ class Engine {
                     this.state = "moving";
                     break;
                 case "pendingFire":
-                    var fireRange = this.calFireRange(this.targetIndex, this.current.fireRadius);
-                    battleMapMesh.geometry.groupsNeedUpdate = true;
-                    battleMapMesh.geometry.faces.forEach(face => {
-                        face.materialIndex = 0;
-                    });
+                    resetGround();
+                    var fireRange = calFireRange(this.targetIndex, this.current.fireRadius);
                     if (fireRange) {
-                        fireRange.forEach(pindex => {
-                            var faceIndex = toFaceIndex(pindex);
-                            if (faceIndex >= 0) {
-                                battleMapMesh.geometry.faces[faceIndex].materialIndex = 3;
-                                battleMapMesh.geometry.faces[faceIndex + 1].materialIndex = 3;
-                            }
-                        });
+                        renderGround(fireRange, 3);
                     }
                     break;
                 case "unitFire":
                     this.current.shoot();
+                    resetGround();
                     this.state = "pending";
                     this.current.flag = true;
                     break;
             }
         }
     }
+}
+
+function resetGround() {
+    var battleMapMesh = scene.getObjectByName('ground');
+    battleMapMesh.geometry.groupsNeedUpdate = true;
+    battleMapMesh.geometry.faces.forEach(face => {
+        face.materialIndex = 0;
+    });
+}
+
+function renderGround(range, matIndex = 0) {
+    var battleMapMesh = scene.getObjectByName('ground');
+    battleMapMesh.geometry.groupsNeedUpdate = true;
+    range.forEach(rindex => {
+        var faceIndex = toFaceIndex(rindex);
+        battleMapMesh.geometry.faces[faceIndex].materialIndex = matIndex;
+        battleMapMesh.geometry.faces[faceIndex + 1].materialIndex = matIndex;
+    });
+
 }
 
 function createScene() {
@@ -381,63 +352,11 @@ class Cannon {
         });
         this.mesh.scale.set(.5, .5, .5);
     }
-    update() {
-        var t = this.clock.getDelta();
-        var horizontalAxle = this.mesh.getObjectByName('horizontalControl');
-        horizontalAxle.rotation.z = this.params.horizontalAngle;
-        this.mesh.rotation.y = this.params.verticalAngle;
-        for (var i = 0; i < this.shells.length; i++) {
-            var shellOne = this.shells[i];
-            var shellhit = false;
-            ennemiesHolder.ennemiesInUse.forEach((ennemy, index) => {
-                var diffPos = shellOne.mesh.position.clone().sub(ennemy.mesh.position.clone());
-                var d = diffPos.length();
-                if (d < game.shellHitDistance) {
-                    this.shells.splice(i, 1);
-                    scene.remove(shellOne.mesh);
-                    shellOne.explode();
-                    ennemy.hit();
-                    shellhit = true;
-                }
-            });
-            if (!shellhit) {
-                if (shellOne.mesh.position.y > 0) {
-                    shellOne.mesh.position.x -= Math.cos(shellOne.horizontalAngle) *
-                        Math.cos(shellOne.verticalAngle) * this.params.shellVelocity * t;
-                    var yt = t + shellOne.yt;
-                    shellOne.yt += t;
-                    shellOne.mesh.position.y += Math.sin(Math.abs(shellOne.horizontalAngle)) * this.params.shellVelocity * t - this.g * Math.pow(yt, 2) / 2;
-                    shellOne.mesh.position.z += Math.sin(shellOne.verticalAngle) * this.params.shellVelocity * t;
-                } else {
-                    this.shells.splice(i, 1);
-                    scene.remove(shellOne.mesh);
-                    shellOne.explode();
-                }
-            }
-        }
-        if (this.fireframe) {
-            var f = getParticle();
-            var tubeTopMesh = this.mesh.getObjectByName('tubeTopMesh');
-            f.mesh.position.copy(tubeTopMesh.getWorldPosition(new THREE.Vector3(0, 0, 0)));
-            f.mesh.position.x -= 2;
-            f.color = {
-                r: 255 / 255,
-                g: 205 / 255,
-                b: 74 / 255
-            };
-            f.mesh.material.color.setRGB(f.color.r, f.color.g, f.color.b);
-            f.mesh.material.opacity = 1;
-            this.mesh.add(f.mesh);
-            f.fire(2.5, 1);
-            this.fireframe--;
-        }
-    }
+
     shoot(target) {
         this.mesh.updateMatrixWorld();
         var tubeTopMesh = this.mesh.getObjectByName('tubeTopMesh');
-        console.log(this.direction)
         const tubePos = tubeTopMesh.getWorldPosition(new THREE.Vector3(0, 0, 0));
-
         for (var i = 0; i < 20; i++) {
             var f = getParticle();
             f.mesh.position.copy(tubePos);
@@ -478,34 +397,6 @@ class Shell {
             scene.add(f.mesh);
             f.explode();
         }
-    }
-}
-
-class EnnemiesHolder {
-    constructor() {
-        this.mesh = new THREE.Object3D();
-        this.ennemiesPool = [];
-        this.ennemiesInUse = [];
-        this.index = 2;
-    }
-    spawnEnnemies() {
-        var ennemy;
-        if (this.ennemiesPool.length) {
-            ennemy = this.ennemiesPool.pop();
-        } else {
-            ennemy = new Tank();
-        }
-        ennemy.index = this.index;
-        this.index++;
-        this.ennemiesInUse.push(ennemy);
-        ennemy.mesh.position.x -= 30 * ennemy.index;
-        ennemy.mesh.rotation.y -= Math.PI / 2;
-        this.mesh.add(ennemy.mesh);
-    }
-    moveAll() {
-        this.ennemiesInUse.forEach((ennemy, index) => {
-            ennemy.move();
-        });
     }
 }
 
@@ -619,76 +510,9 @@ class Tank {
             ease: Bounce.easeOut
         }).reverse(.5);
     }
-    move(routes, callback) {
-        var moveTimeLine = new TimelineLite();
-        var previous = toPosition(routes.shift());
-        var routeArray = [];
-        routes.forEach(route => {
-            var stepPos = toPosition(route);
-            if (stepPos.x != previous.x) {
-                if (routeArray.length && routeArray[routeArray.length - 1].x) {
-                    routeArray[routeArray.length - 1].x += (stepPos.x - previous.x);
-                } else {
-                    var angle = "-=" + Math.PI / 2;
-                    if (stepPos.x > previous.x) {
-                        angle = "-=" + Math.PI / 2;
-                    }
-                    routeArray.push({
-                        x: stepPos.x - previous.x,
-                        agl: angle
-                    });
-                }
-            } else {
-                if (routeArray.length && routeArray[routeArray.length - 1].z) {
-                    routeArray[routeArray.length - 1].z += (stepPos.z - previous.z);
-                } else {
-                    var angle = "-=" + Math.PI / 2;
-                    if (stepPos.x > previous.x) {
-                        angle = "-=" + Math.PI / 2;
-                    }
-                    routeArray.push({
-                        z: stepPos.z - previous.z,
-                        agl: angle
-                    });
-                }
-            }
-            previous = stepPos;
-        });
-        routeArray.forEach(route => {
-            var vars = {};
-            var routeDirection;
-            if (route.x) {
-                vars.x = "+=" + route.x
-                routeDirection = new THREE.Vector3(route.x, 0, 0).normalize();
-            } else if (route.z) {
-                vars.z = "+=" + route.z
-                routeDirection = new THREE.Vector3(0, 0, route.z).normalize();
-            }
-            var angle = this.direction.angleTo(routeDirection);
-            var dirProject = this.direction.clone().cross(routeDirection);
-            this.direction = routeDirection;
-            if (dirProject.y > 0) {
-                moveTimeLine.add(TweenLite.to(this.mesh.rotation, .1, {
-                    y: "+=" + angle
-                }));
-            } else {
-                moveTimeLine.add(TweenLite.to(this.mesh.rotation, .1, {
-                    y: "-=" + angle
-                }));
-            }
-            moveTimeLine.add(TweenLite.to(this.mesh.position, .5, vars));
-        });
-        moveTimeLine.call(() => {
-            if(callback){
-                callback();
-            }
-            engine.state = 'pendingFire';
-        });
-    }
+    move() {}
 
-    shoot() {
-        //console.log('tank.shot');
-    }
+    shoot() {}
 }
 
 function getParticle() {
@@ -854,21 +678,6 @@ class Particle {
     }
 }
 
-
-
-
-// function createCannon() {
-//     cannon = new Cannon();
-//     cannon.mesh.position.set(45, 0, 5);
-//     scene.add(cannon.mesh);
-// }
-
-// function createTank() {
-//     tank = new Tank();
-//     tank.mesh.position.x -= 150;
-//     scene.add(tank.mesh);
-// }
-
 function createGroud(w, h) {
     var groundGemo = new THREE.PlaneGeometry(w, h, w / 10, h / 10);
     var mats = [brownMat, blackMat, greenMat, redMat];
@@ -885,28 +694,7 @@ function createGroud(w, h) {
     scene.add(groudMesh, groundBaseMesh);
 }
 
-function toPosition(pos) {
-    var x = game.stageWidth / 2 - game.segmentsLength * pos[0] - 5;
-    var z = -game.stageHeight / 2 + game.segmentsLength * pos[1] + 5;
-    return new THREE.Vector3(x, 0, z);
-}
-
-function toIndex(matIndex) {
-    var x = Math.floor(matIndex % (game.segmentsLength * 2) / 2);
-    var y = Math.floor(matIndex / (game.segmentsLength * 2));
-    return [y, x];
-}
-
-function toFaceIndex(unitIndex) {
-    if (unitIndex[0] >= 0 && unitIndex[1] >= 0) {
-        var index1 = unitIndex[0] * game.segmentsLength * 2 + 2 * unitIndex[1];
-        return index1;
-    }
-}
-
 function init(event) {
-    // ennemiesHolder = new EnnemiesHolder()
-    // scene.add(ennemiesHolder.mesh);
     var loader = new THREE.FileLoader();
     var placeUnit = function (unitArr, engineContainer) {
         unitArr.forEach(unit => {
@@ -917,7 +705,7 @@ function init(event) {
                     break;
                 case "cannon":
                     entity = new Cannon();
-                    break;    
+                    break;
             }
             entity.index = unit.index;
             entity.mesh.position.copy(toPosition(unit.index));
@@ -947,8 +735,8 @@ function init(event) {
             createScene();
             createGroud(game.stageWidth, game.stageHeight);
             createLights();
-            placeUnit(stageData.user,engine.units);
-            placeUnit(stageData.ennemies,engine.ennemies);
+            placeUnit(stageData.user, engine.units);
+            placeUnit(stageData.ennemies, engine.ennemies);
             loop();
         },
         // onProgress callback

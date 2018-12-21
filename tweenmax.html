@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Cannon</title>
+    <style>
+        body {
+            /* set margin to 0 and overflow to hidden, to go fullscreen */
+            margin: 0;
+            display: block;
+            overflow: hidden;
+        }
+    </style>
+    <script src="lib/three.js"></script>
+    <script src="lib/OrbitControls.js"></script>
+    <script src="lib/TweenMax.js"></script>
+</head>
+
+<body>
+    <script>
+        var scene, camera, renderer, controls;
+        var engine, cannon, tank;
+        var ambientLight, hemisphereLight, shadowLight;
+        var HEIGHT, WIDTH, mousePos = {
+            x: 0,
+            y: 0
+        };
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        scene = new THREE.Scene();
+        nearPlane = .1;
+        farPlane = 10000;
+        camera = new THREE.PerspectiveCamera(
+            50,
+            WIDTH / HEIGHT,
+            .1,
+            10000
+        );
+        scene.fog = new THREE.Fog(0xf7d9aa, 100, 950);
+        camera.position.x = 50;
+        camera.position.z = 100;
+        camera.position.y = 100;
+        camera.lookAt(new THREE.Vector3(-50, 0, 0));
+        renderer = new THREE.WebGLRenderer({
+            alpha: true,
+            antialias: true
+        });
+        renderer.setSize(WIDTH, HEIGHT);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.gammaInput = true;
+        var controls = new THREE.OrbitControls(camera);
+        container = document.body;
+        container.appendChild(renderer.domElement);
+        scene.add(new THREE.GridHelper(100));
+        scene.add(new THREE.AxesHelper(100));
+        window.addEventListener('resize', handleWindowResize, false);
+
+        //----------------
+        var geom = new THREE.BoxGeometry(20, 20, 20);
+        var mesh = new THREE.Mesh(geom);
+        scene.add(mesh);
+        TweenLite.to([mesh.position,mesh.scale],10,{x:"+=20",y:"+=1"});
+
+        function render() {
+            requestAnimationFrame(render);
+            renderer.render(scene, camera);
+        }
+
+        function handleWindowResize() {
+            HEIGHT = window.innerHeight;
+            WIDTH = window.innerWidth;
+            renderer.setSize(WIDTH, HEIGHT);
+            camera.aspect = WIDTH / HEIGHT;
+            camera.updateProjectionMatrix();
+        }
+        render();
+    </script>
+</body>
+
+</html>
