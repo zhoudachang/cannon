@@ -45,24 +45,28 @@ var HEIGHT, WIDTH, mousePos = {
 };
 BehaviorTree.register('move-fire', new BehaviorTree.Task({
     title: 'move-fire',
-    start: function (obj) {
-        obj.isStarted = true;
+    start: function (unit) {
+        engine.current = unit;
+        var moveRange = calMoveRange(game.map, unit.index, unit.moveRadius);
+        engine.targetIndex = moveRange[moveRange.length - 1];
     },
     end: function (obj) {
         obj.isStarted = false;
     },
     run: function (unit) {
-        if (!unit.flag) {
+        if (!unit.flag && !TweenMax.isTweening(engine.current.mesh.position)) {
             engine.current = unit;
             var moveRange = calMoveRange(game.map, unit.index, unit.moveRadius);
             engine.targetIndex = moveRange[moveRange.length - 1];
             engine.driveUnit(() => {
                 unit.flag = true;
-                console.log('action finished');
+                console.log('action finished', unit);
                 this.success();
             });
+            console.log(engine.current,TweenMax.isTweening(engine.current.mesh.position));
             this.running();
-        } else {
+        } 
+        else {
             this.fail();
         }
     }
@@ -165,7 +169,6 @@ class Engine {
     }
 
     update() {
-        var battleMapMesh = scene.getObjectByName('ground');
         if (!this.controlSide()) {
             var ennemy;
             for (var i = 0; i < this.ennemies.length; i++) {
@@ -175,10 +178,8 @@ class Engine {
                     break;
                 }
             }
-            if (ennemy) {
-                console.log('step');
-                this.btree.step();
-            }
+            if (ennemy) this.btree.step();
+                
         } else {
             switch (this.state) {
                 case "pending":
@@ -510,9 +511,9 @@ class Tank {
             ease: Bounce.easeOut
         }).reverse(.5);
     }
-    move() {}
+    move() { }
 
-    shoot() {}
+    shoot() { }
 }
 
 function getParticle() {
