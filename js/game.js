@@ -28,6 +28,7 @@ var redMat = new THREE.MeshLambertMaterial({
 var particlesPool = [];
 var particlesInUse = [];
 var game = {
+    round:1,
     stageWidth: 100,
     stageHeight: 100,
     segmentsLength: 10,
@@ -46,7 +47,6 @@ var HEIGHT, WIDTH, mousePos = {
 BehaviorTree.register('move-fire', new BehaviorTree.Task({
     title: 'move-fire',
     start: function (unit) {
-        engine.current = unit;
         var moveRange = calMoveRange(game.map, unit.index, unit.moveRadius);
         engine.targetIndex = moveRange[moveRange.length - 1];
     },
@@ -54,27 +54,27 @@ BehaviorTree.register('move-fire', new BehaviorTree.Task({
         obj.isStarted = false;
     },
     run: function (unit) {
-        if (!unit.flag && !TweenMax.isTweening(engine.current.mesh.position)) {
-            engine.current = unit;
+        if(!unit.isMoving){
             var moveRange = calMoveRange(game.map, unit.index, unit.moveRadius);
+            if(!moveRange || moveRange.length == 1){
+                this.fail();
+                return;
+            }
             engine.targetIndex = moveRange[moveRange.length - 1];
             engine.driveUnit(() => {
                 unit.flag = true;
                 console.log('action finished', unit);
                 this.success();
             });
-            console.log(engine.current,TweenMax.isTweening(engine.current.mesh.position));
-            this.running();
-        } 
-        else {
-            this.fail();
         }
+        this.running();
     }
 }));
 BehaviorTree.register('fire', new BehaviorTree.Task({
     title: 'fire',
     run: function (unit) {
         console.log('fire');
+        unit.flag = true;
         this.success();
     }
 }));
@@ -100,6 +100,7 @@ class Engine {
         this.ennemies = [];
         this.units = [];
         this.current;
+        this.target;
         this.targetIndex;
         this.btree = new BehaviorTree({
             title: 'enemy action',
@@ -111,48 +112,79 @@ class Engine {
         });
     }
     driveUnit(callback) {
-        if (!TweenMax.isTweening(this.current.mesh.position)) {
-            var moveTimeLine = new TimelineLite();
-            var routes = findPath(game.map, this.current.index, this.targetIndex);
-            var routeArray = tweenPath(routes);
-            routeArray.forEach(route => {
-                var vars = {};
-                var routeDirection;
-                if (route.x) {
-                    vars.x = "+=" + route.x
-                    routeDirection = new THREE.Vector3(route.x, 0, 0).normalize();
-                } else if (route.z) {
-                    vars.z = "+=" + route.z
-                    routeDirection = new THREE.Vector3(0, 0, route.z).normalize();
-                }
-                var angle = this.current.direction.angleTo(routeDirection);
-                var dirProject = this.current.direction.clone().cross(routeDirection);
-                this.current.direction = routeDirection;
-                if (dirProject.y > 0) {
-                    moveTimeLine.add(TweenLite.to(this.current.mesh.rotation, .1, {
-                        y: "+=" + angle
-                    }));
-                } else {
-                    moveTimeLine.add(TweenLite.to(this.current.mesh.rotation, .1, {
-                        y: "-=" + angle
-                    }));
-                }
-                moveTimeLine.add(TweenLite.to(this.current.mesh.position, .5, vars));
-            });
-            moveTimeLine.call(() => {
-                if (callback) {
-                    callback();
-                }
-                engine.state = 'pendingFire';
-            });
-        }
+        this.current.isMoving = true;
+        var moveTimeLine = new TimelineLite();
+        var routes = findPath(game.map, this.current.index, this.targetIndex);
+        var routeArray = tweenPath(routes);
+        routeArray.forEach(route => {
+            var vars = {};
+            var routeDirection;
+            if (route.x) {
+                vars.x = "+=" + route.x
+                routeDirection = new THREE.Vector3(route.x, 0, 0).normalize();
+            } else if (route.z) {
+                vars.z = "+=" + route.z
+                routeDirection = new THREE.Vector3(0, 0, route.z).normalize();
+            }
+            var angle = this.current.direction.angleTo(routeDirection);
+            var dirProject = this.current.direction.clone().cross(routeDirection);
+            this.current.direction = routeDirection;
+            if (dirProject.y > 0) {
+                moveTimeLine.add(TweenLite.to(this.current.mesh.rotation, .1, {
+                    y: "+=" + angle
+                }));
+            } else {
+                moveTimeLine.add(TweenLite.to(this.current.mesh.rotation, .1, {
+                    y: "-=" + angle
+                }));
+            }
+            moveTimeLine.add(TweenLite.to(this.current.mesh.position, .5, vars));
+        });
+        moveTimeLine.call(() => {
+            this.current.isMoving = false;
+            this.current.index = this.targetIndex;
+            this.state = 'pendingFire';
+            if (callback) {
+                callback();
+            }
+        });
     }
+
+    attack(){
+        this.current.isFiring = true;
+        var tubeAxle = this.current.mesh.getObjectByName('tubeControl');
+        var currentPostion = this.current.mesh.getWorldPosition(new THREE.Vector3(0,0,0));
+        var targetPostion = this.target.mesh.getWorldPosition(new THREE.Vector3(0,0,0));
+        console.log(currentPostion,targetPostion);
+        var dir = targetPostion.sub(currentPostion).normalize();
+        console.log(dir,this.current.tubeDirection);
+        var angle = this.current.tubeDirection.angleTo(dir);
+        console.log(angle);
+        TweenMax.to(tubeAxle, 1, {
+            y: angle,
+            ease: Strong.easeOut,
+            onComplete: () => {this.current.isFiring = false}
+        });
+    }
+
     selectedUnit(pos) {
         var select;
         this.units.forEach(item => {
             if (item.index[0] == pos[0] && item.index[1] == pos[1]) {
                 select = item;
                 this.current = select;
+                return;
+            }
+        });
+        return select;
+    }
+
+    selectedEnnemy(pos){
+        var select;
+        this.ennemies.forEach(item => {
+            if (item.index[0] == pos[0] && item.index[1] == pos[1]) {
+                select = item;
+                this.target = select;
                 return;
             }
         });
@@ -174,12 +206,22 @@ class Engine {
             for (var i = 0; i < this.ennemies.length; i++) {
                 if (!this.ennemies[i].flag) {
                     ennemy = this.ennemies[i];
+                    this.current = ennemy;
                     this.btree.setObject(ennemy);
                     break;
                 }
             }
-            if (ennemy) this.btree.step();
-                
+            if(!ennemy){
+                game.round +=1;
+                this.units.map(i => i.flag = false);
+                this.ennemies.map(i => i.flag = false);
+                this.current = null;
+                console.log("round = " + game.round);
+                this.state = "pending";
+            }else {
+                this.btree.step();
+            }
+
         } else {
             switch (this.state) {
                 case "pending":
@@ -206,7 +248,8 @@ class Engine {
                     }
                     break;
                 case "unitFire":
-                    this.current.shoot();
+                    // this.current.shoot();
+                    this.attack();
                     resetGround();
                     this.state = "pending";
                     this.current.flag = true;
@@ -404,15 +447,18 @@ class Shell {
 class Tank {
     constructor() {
         this.direction = new THREE.Vector3(1, 0, 0);
+        this.tubeDirection = this.direction.clone();
         this.moveRadius = 3;
         this.fireRadius = 3;
         this.mesh = new THREE.Object3D();
         this.wheels = [];
-        this.speed = 0.1;
-        this.index = 0;
         this.health = 100;
         this.healthMax = 100;
         this.mesh.castShadow = true;
+        this.shape();
+    }
+
+    shape(){
         var bodyShape = new THREE.Shape();
         bodyShape.moveTo(5, 0);
         bodyShape.lineTo(3, -2);
@@ -434,12 +480,31 @@ class Tank {
         bodyMesh.position.z -= 5;
         this.mesh.add(bodyMesh);
         var hatGeom = new THREE.CylinderGeometry(5, 5, 5);
-        var hatMesh = new THREE.Mesh(hatGeom, yellowMat);
-        hatMesh.position.y += 11;
+        var tubeControl = new THREE.Mesh(hatGeom, yellowMat);
+        tubeControl.name = "tubeControl";
+        tubeControl.position.y += 11;
         var hatGeom2 = new THREE.CylinderGeometry(3, 3, 2);
         var hatMesh2 = new THREE.Mesh(hatGeom2, yellowMat);
-        hatMesh2.position.y += 14;
-        this.mesh.add(hatMesh, hatMesh2);
+        hatMesh2.position.y += 3;
+        tubeControl.add(hatMesh2);
+
+        var tubeAxleGemo = new THREE.CylinderGeometry(2, 2, 4);
+        tubeAxleGemo.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
+        this.tubeAxleMesh = new THREE.Mesh(tubeAxleGemo, yellowMat);
+        this.tubeAxleMesh.position.x += 5;
+        tubeControl.add(this.tubeAxleMesh);
+        var tubeGemo = new THREE.CylinderGeometry(1, 1, 8);
+        tubeGemo.applyMatrix(new THREE.Matrix4().makeRotationZ(-Math.PI / 2));
+        var tubeMesh = new THREE.Mesh(tubeGemo, blackMat);
+        tubeMesh.position.set(10, 0, 0);
+        var tubeTopGemo = new THREE.CylinderGeometry(2, 2, 3);
+        tubeTopGemo.applyMatrix(new THREE.Matrix4().makeRotationZ(-Math.PI / 2));
+        var tubeTopMesh = new THREE.Mesh(tubeTopGemo, blackMat);
+        tubeTopMesh.position.x += 14;
+        tubeControl.add(tubeMesh, tubeTopMesh);
+
+
+        this.mesh.add(tubeControl);
         var frontWheelGeom = new THREE.CylinderGeometry(4, 4, 2, 16);
         frontWheelGeom.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
         var frontWheelMesh = new THREE.Mesh(frontWheelGeom, blackMat);
@@ -458,22 +523,6 @@ class Tank {
         this.mesh.add(backWheelMesh, backLeftWheelMesh);
         this.wheels.push(backWheelMesh);
         this.wheels.push(backLeftWheelMesh);
-        var tubeAxleGemo = new THREE.CylinderGeometry(2, 2, 4);
-        tubeAxleGemo.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
-        this.tubeAxleMesh = new THREE.Mesh(tubeAxleGemo, yellowMat);
-        this.tubeAxleMesh.position.y += 11;
-        this.tubeAxleMesh.position.x += 5;
-        this.mesh.add(this.tubeAxleMesh);
-        var tubeGemo = new THREE.CylinderGeometry(1, 1, 8);
-        tubeGemo.applyMatrix(new THREE.Matrix4().makeRotationZ(-Math.PI / 2));
-        var tubeMesh = new THREE.Mesh(tubeGemo, blackMat);
-        tubeMesh.position.set(10, 11, 0);
-        var tubeTopGemo = new THREE.CylinderGeometry(2, 2, 3);
-        tubeTopGemo.applyMatrix(new THREE.Matrix4().makeRotationZ(-Math.PI / 2));
-        var tubeTopMesh = new THREE.Mesh(tubeTopGemo, blackMat);
-        tubeTopMesh.position.y += 11;
-        tubeTopMesh.position.x += 14;
-        this.mesh.add(tubeMesh, tubeTopMesh);
         var canvas = document.createElement('canvas');
         canvas.width = 128;
         canvas.height = 32;
@@ -511,9 +560,11 @@ class Tank {
             ease: Bounce.easeOut
         }).reverse(.5);
     }
-    move() { }
+    move() {}
 
-    shoot() { }
+    // shoot(target) {
+
+    // }
 }
 
 function getParticle() {
@@ -779,14 +830,23 @@ function handleMouseUp() {
         var findex1 = res.faceIndex;
         var findex2 = findex1 % 2 == 0 ? (findex1 + 1) : findex1 - 1;
         var index = toIndex(findex1 > findex2 ? findex2 : findex1);
-        engine.targetIndex = index;
-        var selectUnit = engine.selectedUnit(index);
-        if (selectUnit && engine.state == 'pending') {
-            engine.state = 'selected';
-        } else if (groundMesh.geometry.faces[res.faceIndex].materialIndex == 2) { //selected state
+        if (engine.state == 'pending') {
+            var selectUnit = engine.selectedUnit(index);
+            if(selectUnit){
+                engine.state = 'selected';
+            }
+        // } else if (groundMesh.geometry.faces[res.faceIndex].materialIndex == 2) { //selected state
+        } else if(engine.state == 'pendingMove' && groundMesh.geometry.faces[res.faceIndex].materialIndex == 2) {
+            engine.targetIndex = index;
             engine.state = 'unitMove';
-        } else if (groundMesh.geometry.faces[res.faceIndex].materialIndex == 3) { //
-            engine.state = 'unitFire';
+        // } else if (groundMesh.geometry.faces[res.faceIndex].materialIndex == 3) { //
+        } else if(engine.state == 'pendingFire' && groundMesh.geometry.faces[res.faceIndex].materialIndex == 3) {
+            var target = engine.selectedEnnemy(index);
+            if(target){
+                engine.target = target;
+                engine.targetIndex = index;
+                engine.state = 'unitFire';
+            }
         } else {
             engine.state = 'pending';
         }

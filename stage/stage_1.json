@@ -4,7 +4,7 @@
 	"height":100,
 	"block":[],
 	"user":[{"type":"tank","index":[0,5]},{"type":"cannon","index":[3,5]}],
-	"ennemies":[{"type":"tank","index":[9,3]},{"type":"cannon","index":[9,5]}],
+	"ennemies":[{"type":"tank","index":[3,3]},{"type":"cannon","index":[9,5]}],
 	"stuff":[
 		
 	]
