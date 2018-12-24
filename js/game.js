@@ -34,6 +34,7 @@ var game = {
     segmentsLength: 10,
     shellHitDistance: 20
 };
+var stats = new Stats();
 var raycaster = new THREE.Raycaster();
 var mouseVector = new THREE.Vector3();
 
@@ -116,6 +117,7 @@ class Engine {
         var moveTimeLine = new TimelineLite();
         var routes = findPath(game.map, this.current.index, this.targetIndex);
         var routeArray = tweenPath(routes);
+        moveTimeLine.add(TweenLite.to(this.current.tubeControl.rotation,.5,{y:0}));
         routeArray.forEach(route => {
             var vars = {};
             var routeDirection;
@@ -129,6 +131,7 @@ class Engine {
             var angle = this.current.direction.angleTo(routeDirection);
             var dirProject = this.current.direction.clone().cross(routeDirection);
             this.current.direction = routeDirection;
+            this.current.tubeDirection = routeDirection;
             if (dirProject.y > 0) {
                 moveTimeLine.add(TweenLite.to(this.current.mesh.rotation, .1, {
                     y: "+=" + angle
@@ -152,19 +155,15 @@ class Engine {
 
     attack(){
         this.current.isFiring = true;
-        var tubeAxle = this.current.mesh.getObjectByName('tubeControl');
+        var moveTimeLine = new TimelineLite();
         var currentPostion = this.current.mesh.getWorldPosition(new THREE.Vector3(0,0,0));
         var targetPostion = this.target.mesh.getWorldPosition(new THREE.Vector3(0,0,0));
-        console.log(currentPostion,targetPostion);
         var dir = targetPostion.sub(currentPostion).normalize();
-        console.log(dir,this.current.tubeDirection);
         var angle = this.current.tubeDirection.angleTo(dir);
-        console.log(angle);
-        TweenMax.to(tubeAxle, 1, {
-            y: angle,
-            ease: Strong.easeOut,
-            onComplete: () => {this.current.isFiring = false}
-        });
+        var dirProject = this.current.tubeDirection.clone().cross(dir);
+        angle = (dirProject.y > 0 ? angle: -angle);
+        moveTimeLine.add(TweenLite.to(this.current.tubeControl.rotation,.5,{y:angle}));
+        moveTimeLine.call(() => {this.current.isFiring = false});
     }
 
     selectedUnit(pos) {
@@ -242,7 +241,7 @@ class Engine {
                     break;
                 case "pendingFire":
                     resetGround();
-                    var fireRange = calFireRange(this.targetIndex, this.current.fireRadius);
+                    var fireRange = calFireRange(this.current.index, this.current.fireRadius);
                     if (fireRange) {
                         renderGround(fireRange, 3);
                     }
@@ -444,17 +443,27 @@ class Shell {
     }
 }
 
-class Tank {
+class Unit {
+    constructor (){
+        this.mesh = new THREE.Object3D();
+        this.mesh.castShadow = true;
+    }
+
+    get tubeControl (){
+        return this.mesh.getObjectByName('tubeControl');
+    }
+}
+
+class Tank extends Unit{
     constructor() {
+        super();
         this.direction = new THREE.Vector3(1, 0, 0);
         this.tubeDirection = this.direction.clone();
         this.moveRadius = 3;
         this.fireRadius = 3;
-        this.mesh = new THREE.Object3D();
         this.wheels = [];
         this.health = 100;
         this.healthMax = 100;
-        this.mesh.castShadow = true;
         this.shape();
     }
 
@@ -746,7 +755,9 @@ function createGroud(w, h) {
     scene.add(groudMesh, groundBaseMesh);
 }
 
+
 function init(event) {
+    document.body.appendChild(stats.dom)
     var loader = new THREE.FileLoader();
     var placeUnit = function (unitArr, engineContainer) {
         unitArr.forEach(unit => {
@@ -888,6 +899,7 @@ function handleMouseMove(event) {
 
 function loop() {
     engine.update();
+    stats.update();
     renderer.render(scene, camera);
     requestAnimationFrame(loop);
 }
