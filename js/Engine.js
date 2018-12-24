@@ -71,6 +71,7 @@ class Engine {
         var dirProject = this.current.tubeDirection.clone().cross(dir);
         angle = (dirProject.y > 0 ? angle: -angle);
         moveTimeLine.add(TweenLite.to(this.current.tubeControl.rotation,.5,{y:angle}));
+        
         moveTimeLine.call(() => {this.current.isFiring = false});
     }
 

@@ -64,7 +64,6 @@ BehaviorTree.register('move-fire', new BehaviorTree.Task({
             engine.targetIndex = moveRange[moveRange.length - 1];
             engine.driveUnit(() => {
                 unit.flag = true;
-                console.log('action finished', unit);
                 this.success();
             });
         }
@@ -221,6 +220,7 @@ class Cannon extends Unit{
         var tubeMesh = new THREE.Mesh(tubeGemo, blackMat);
         tubeMesh.position.set(-10, 0, 0);
         horizontalAxle.add(tubeMesh);
+        horizontalAxle.rotation.z -= Math.PI/4;
         var tubeGemo2 = new THREE.CylinderGeometry(0.8, 0.8, 10, tubeSegments);
         tubeGemo2.applyMatrix(new THREE.Matrix4().makeRotationZ(-Math.PI / 2));
         var tubeMesh2 = new THREE.Mesh(tubeGemo2, blackMat);
@@ -676,7 +676,7 @@ function handleMouseUp() {
         var index = toIndex(findex1 > findex2 ? findex2 : findex1);
         if (engine.state == 'pending') {
             var selectUnit = engine.selectedUnit(index);
-            if(selectUnit){
+            if(selectUnit && !selectUnit.flag){
                 engine.state = 'selected';
             }
         // } else if (groundMesh.geometry.faces[res.faceIndex].materialIndex == 2) { //selected state
