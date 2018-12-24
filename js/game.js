@@ -93,170 +93,6 @@ BehaviorTree.register('idle', new BehaviorTree.Task({
         this.success();
     }
 }));
-class Engine {
-    constructor() {
-        //pending - selected - unitMove - penddingFire - unitFire - over - pending
-        this.state = 'pending';
-        this.mode = 0;
-        this.ennemies = [];
-        this.units = [];
-        this.current;
-        this.target;
-        this.targetIndex;
-        this.btree = new BehaviorTree({
-            title: 'enemy action',
-            tree: new BehaviorTree.Priority({
-                nodes: [
-                    'move-fire', 'fire', 'move', 'idle'
-                ]
-            })
-        });
-    }
-    driveUnit(callback) {
-        this.current.isMoving = true;
-        var moveTimeLine = new TimelineLite();
-        var routes = findPath(game.map, this.current.index, this.targetIndex);
-        var routeArray = tweenPath(routes);
-        moveTimeLine.add(TweenLite.to(this.current.tubeControl.rotation,.5,{y:0}));
-        routeArray.forEach(route => {
-            var vars = {};
-            var routeDirection;
-            if (route.x) {
-                vars.x = "+=" + route.x
-                routeDirection = new THREE.Vector3(route.x, 0, 0).normalize();
-            } else if (route.z) {
-                vars.z = "+=" + route.z
-                routeDirection = new THREE.Vector3(0, 0, route.z).normalize();
-            }
-            var angle = this.current.direction.angleTo(routeDirection);
-            var dirProject = this.current.direction.clone().cross(routeDirection);
-            this.current.direction = routeDirection;
-            this.current.tubeDirection = routeDirection;
-            if (dirProject.y > 0) {
-                moveTimeLine.add(TweenLite.to(this.current.mesh.rotation, .1, {
-                    y: "+=" + angle
-                }));
-            } else {
-                moveTimeLine.add(TweenLite.to(this.current.mesh.rotation, .1, {
-                    y: "-=" + angle
-                }));
-            }
-            moveTimeLine.add(TweenLite.to(this.current.mesh.position, .5, vars));
-        });
-        moveTimeLine.call(() => {
-            this.current.isMoving = false;
-            this.current.index = this.targetIndex;
-            this.state = 'pendingFire';
-            if (callback) {
-                callback();
-            }
-        });
-    }
-
-    attack(){
-        this.current.isFiring = true;
-        var moveTimeLine = new TimelineLite();
-        var currentPostion = this.current.mesh.getWorldPosition(new THREE.Vector3(0,0,0));
-        var targetPostion = this.target.mesh.getWorldPosition(new THREE.Vector3(0,0,0));
-        var dir = targetPostion.sub(currentPostion).normalize();
-        var angle = this.current.tubeDirection.angleTo(dir);
-        var dirProject = this.current.tubeDirection.clone().cross(dir);
-        angle = (dirProject.y > 0 ? angle: -angle);
-        moveTimeLine.add(TweenLite.to(this.current.tubeControl.rotation,.5,{y:angle}));
-        moveTimeLine.call(() => {this.current.isFiring = false});
-    }
-
-    selectedUnit(pos) {
-        var select;
-        this.units.forEach(item => {
-            if (item.index[0] == pos[0] && item.index[1] == pos[1]) {
-                select = item;
-                this.current = select;
-                return;
-            }
-        });
-        return select;
-    }
-
-    selectedEnnemy(pos){
-        var select;
-        this.ennemies.forEach(item => {
-            if (item.index[0] == pos[0] && item.index[1] == pos[1]) {
-                select = item;
-                this.target = select;
-                return;
-            }
-        });
-        return select;
-    }
-
-    controlSide() {
-        for (var i = 0; i < this.units.length; i++) {
-            if (!this.units[i].flag) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    update() {
-        if (!this.controlSide()) {
-            var ennemy;
-            for (var i = 0; i < this.ennemies.length; i++) {
-                if (!this.ennemies[i].flag) {
-                    ennemy = this.ennemies[i];
-                    this.current = ennemy;
-                    this.btree.setObject(ennemy);
-                    break;
-                }
-            }
-            if(!ennemy){
-                game.round +=1;
-                this.units.map(i => i.flag = false);
-                this.ennemies.map(i => i.flag = false);
-                this.current = null;
-                console.log("round = " + game.round);
-                this.state = "pending";
-            }else {
-                this.btree.step();
-            }
-
-        } else {
-            switch (this.state) {
-                case "pending":
-                    resetGround();
-                    break;
-                case "selected":
-                    var result = calMoveRange(game.map, this.current.index, this.current.moveRadius);
-                    if (!result || result.length == 1) {
-                        this.state = "pendingFire";
-                        return;
-                    }
-                    renderGround(result, 2);
-                    this.state = "pendingMove";
-                    break;
-                case "unitMove":
-                    this.driveUnit();
-                    this.state = "moving";
-                    break;
-                case "pendingFire":
-                    resetGround();
-                    var fireRange = calFireRange(this.current.index, this.current.fireRadius);
-                    if (fireRange) {
-                        renderGround(fireRange, 3);
-                    }
-                    break;
-                case "unitFire":
-                    // this.current.shoot();
-                    this.attack();
-                    resetGround();
-                    this.state = "pending";
-                    this.current.flag = true;
-                    break;
-            }
-        }
-    }
-}
 
 function resetGround() {
     var battleMapMesh = scene.getObjectByName('ground');
@@ -274,7 +110,6 @@ function renderGround(range, matIndex = 0) {
         battleMapMesh.geometry.faces[faceIndex].materialIndex = matIndex;
         battleMapMesh.geometry.faces[faceIndex + 1].materialIndex = matIndex;
     });
-
 }
 
 function createScene() {
@@ -338,55 +173,67 @@ function createLights() {
     scene.add(shadowLight);
     scene.add(ambientLight);
 }
+class Unit {
+    constructor (){
+        this.mesh = new THREE.Object3D();
+        this.mesh.castShadow = true;
+    }
 
-class Cannon {
+    get tubeControl (){
+        return this.mesh.getObjectByName('tubeControl');
+    }
+}
+
+class Cannon extends Unit{
     constructor() {
+        super();
         this.params = {
             horizontalAngle: 0.0,
             shellVelocity: 300,
             verticalAngle: 0
         };
         this.direction = new THREE.Vector3(-1, 0, 0);
+        this.tubeDirection = this.direction.clone();
         this.fireRadius = 3;
         this.g = 10;
         var baseRadiusTop = 10;
         var baseRadiusBottom = 10;
         var baseHeight = 4;
         var tubeSegments = 10;
-        this.mesh = new THREE.Object3D();
         this.shells = [];
-        this.clock = new THREE.Clock();
         var geometry = new THREE.CylinderGeometry(baseRadiusTop, baseRadiusBottom, baseHeight, 20);
         var baseMesh = new THREE.Mesh(geometry, whiteMat);
+        baseMesh.name = 'tubeControl';
         baseMesh.position.y += baseHeight / 2;
         this.mesh.add(baseMesh);
         var geometry = new THREE.SphereGeometry(baseRadiusTop * 0.8, 32, 32, 0, Math.PI);
         geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
         var hatMesh = new THREE.Mesh(geometry, whiteMat);
         hatMesh.name = 'hatMesh';
-        hatMesh.position.y += baseHeight;
-        this.mesh.add(hatMesh);
+        hatMesh.position.y += baseHeight/2;
         var geometry = new THREE.CylinderGeometry(baseRadiusTop - 1, baseRadiusBottom - 1, baseHeight, 20);
         var horizontalAxle = new THREE.Mesh(geometry, blackMat);
         horizontalAxle.name = 'horizontalControl';
         geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
         horizontalAxle.position.copy(hatMesh.position.clone());
-        var tubeGemo = new THREE.CylinderGeometry(2, 1, 10, tubeSegments);
+        var tubeGemo = new THREE.CylinderGeometry(2, 1, 3, tubeSegments);
         tubeGemo.applyMatrix(new THREE.Matrix4().makeRotationZ(-Math.PI / 2));
         var tubeMesh = new THREE.Mesh(tubeGemo, blackMat);
         tubeMesh.position.set(-10, 0, 0);
         horizontalAxle.add(tubeMesh);
-        var tubeGemo2 = new THREE.CylinderGeometry(0.8, 0.8, 20, tubeSegments);
+        var tubeGemo2 = new THREE.CylinderGeometry(0.8, 0.8, 10, tubeSegments);
         tubeGemo2.applyMatrix(new THREE.Matrix4().makeRotationZ(-Math.PI / 2));
         var tubeMesh2 = new THREE.Mesh(tubeGemo2, blackMat);
         tubeMesh2.position.set(-10, 0, 0);
-        var tubeTopGemo = new THREE.CylinderGeometry(1, 1, 2, tubeSegments);
+        var tubeTopGemo = new THREE.CylinderGeometry(2, 2, 2, tubeSegments);
         tubeTopGemo.applyMatrix(new THREE.Matrix4().makeRotationZ(-Math.PI / 2));
         var tubeTopMesh = new THREE.Mesh(tubeTopGemo, blackMat);
         tubeTopMesh.name = 'tubeTopMesh';
-        tubeTopMesh.position.x = -20;
+        tubeTopMesh.position.x = -15;
         horizontalAxle.add(tubeMesh2, tubeTopMesh);
-        this.mesh.add(horizontalAxle);
+        baseMesh.add(hatMesh);
+        baseMesh.add(horizontalAxle);
+        this.mesh.add(baseMesh);
         this.mesh.traverse(function (object) {
             if (object instanceof THREE.Mesh) {
                 object.castShadow = true;
@@ -442,18 +289,6 @@ class Shell {
         }
     }
 }
-
-class Unit {
-    constructor (){
-        this.mesh = new THREE.Object3D();
-        this.mesh.castShadow = true;
-    }
-
-    get tubeControl (){
-        return this.mesh.getObjectByName('tubeControl');
-    }
-}
-
 class Tank extends Unit{
     constructor() {
         super();
@@ -786,9 +621,7 @@ function init(event) {
             var stageData = JSON.parse(data);
             game.stageWidth = stageData.width;
             game.stageHeight = stageData.height;
-            game.map = [
-                []
-            ];
+            game.map = [];
             for (var x = 0; x < game.segmentsLength; x++) {
                 game.map[x] = [];
                 for (var y = 0; y < game.segmentsLength; y++) {
@@ -852,12 +685,12 @@ function handleMouseUp() {
             engine.state = 'unitMove';
         // } else if (groundMesh.geometry.faces[res.faceIndex].materialIndex == 3) { //
         } else if(engine.state == 'pendingFire' && groundMesh.geometry.faces[res.faceIndex].materialIndex == 3) {
+            engine.targetIndex = index;
             var target = engine.selectedEnnemy(index);
             if(target){
                 engine.target = target;
-                engine.targetIndex = index;
-                engine.state = 'unitFire';
             }
+            engine.state = 'unitFire';
         } else {
             engine.state = 'pending';
         }
