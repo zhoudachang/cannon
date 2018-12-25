@@ -435,18 +435,18 @@ class Particle {
             transparent: true,
             opacity: .5,
             flatShading: THREE.FlatShading,
-            alphaTest: .1
+            // alphaTest: .1
         });
         var geom = new THREE.BoxGeometry(1, 1, 1);
         this.mesh = new THREE.Mesh(geom, particleMat);
     }
     initialize() {
-        this.mesh.rotation.x = 0;
-        this.mesh.rotation.y = 0;
-        this.mesh.rotation.z = 0;
-        this.mesh.position.x = 0;
-        this.mesh.position.y = 0;
-        this.mesh.position.z = 0;
+        // this.mesh.rotation.x = 0;
+        // this.mesh.rotation.y = 0;
+        // this.mesh.rotation.z = 0;
+        // this.mesh.position.x = 0;
+        // this.mesh.position.y = 0;
+        // this.mesh.position.z = 0;
         this.mesh.scale.x = 1;
         this.mesh.scale.y = 1;
         this.mesh.scale.z = 1;
