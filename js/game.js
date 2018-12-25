@@ -181,6 +181,10 @@ class Unit {
     get tubeControl (){
         return this.mesh.getObjectByName('tubeControl');
     }
+
+    get tubeTop(){
+        return this.mesh.getObjectByName('tubeTop');
+    }
 }
 
 class Cannon extends Unit{
@@ -228,7 +232,7 @@ class Cannon extends Unit{
         var tubeTopGemo = new THREE.CylinderGeometry(2, 2, 2, tubeSegments);
         tubeTopGemo.applyMatrix(new THREE.Matrix4().makeRotationZ(-Math.PI / 2));
         var tubeTopMesh = new THREE.Mesh(tubeTopGemo, blackMat);
-        tubeTopMesh.name = 'tubeTopMesh';
+        tubeTopMesh.name = 'tubeTop';
         tubeTopMesh.position.x = -15;
         horizontalAxle.add(tubeMesh2, tubeTopMesh);
         baseMesh.add(hatMesh);
@@ -344,6 +348,7 @@ class Tank extends Unit{
         var tubeTopGemo = new THREE.CylinderGeometry(2, 2, 3);
         tubeTopGemo.applyMatrix(new THREE.Matrix4().makeRotationZ(-Math.PI / 2));
         var tubeTopMesh = new THREE.Mesh(tubeTopGemo, blackMat);
+        tubeTopMesh.name = 'tubeTop';
         tubeTopMesh.position.x += 14;
         tubeControl.add(tubeMesh, tubeTopMesh);
 

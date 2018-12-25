@@ -62,17 +62,32 @@ class Engine {
 
     attack(){
         this.current.isFiring = true;
-        var moveTimeLine = new TimelineLite();
+        var attackTimeLine = new TimelineLite();
         console.log(this.current.index,this.targetIndex);
         var currnetVector = toPosition(this.current.index);
         var targetVector = toPosition(this.targetIndex);//new THREE.Vector3(this.targetIndex[1],0,this.targetIndex[0]);
-        var dir = targetVector.sub(currnetVector).normalize();
+        var dir = targetVector.clone().sub(currnetVector).normalize();
         var angle = this.current.tubeDirection.angleTo(dir);
         var dirProject = this.current.tubeDirection.clone().cross(dir);
         angle = (dirProject.y > 0 ? angle: -angle);
-        moveTimeLine.add(TweenLite.to(this.current.tubeControl.rotation,.5,{y:angle}));
-        
-        moveTimeLine.call(() => {this.current.isFiring = false});
+        attackTimeLine.add(TweenLite.to(this.current.tubeControl.rotation,.5,{y:angle}));
+        this.current.mesh.updateMatrixWorld();
+        for (var i = 0; i < 5; i++) {
+            var f = getParticle();
+            f.mesh.position.copy(tubeTop.getWorldPosition(new THREE.Vector3()));
+            f.mesh.translateOnAxis(this.current.tubeDirection, 1);
+            f.color = {
+                r: 255 / 255,
+                g: 205 / 255,
+                b: 74 / 255
+            };
+            f.mesh.material.color.setRGB(f.color.r, f.color.g, f.color.b);
+            f.mesh.material.opacity = 1;
+            this.current.mesh.parent.add(f.mesh);
+            var delay = 0.1*i;
+            f.fire(2.5, 1, delay);
+        }
+        attackTimeLine.call(() => {this.current.isFiring = false});
     }
 
     selectedUnit(pos) {
