@@ -47,14 +47,15 @@ var HEIGHT, WIDTH, mousePos = {
 };
 BehaviorTree.register('move-fire', new BehaviorTree.Task({
     title: 'move-fire',
-    start: function (unit) {
-        var moveRange = calMoveRange(game.map, unit.index, unit.moveRadius);
-        engine.targetIndex = moveRange[moveRange.length - 1];
-    },
-    end: function (obj) {
-        obj.isStarted = false;
-    },
+    // start: function (unit) {
+    //     var moveRange = calMoveRange(game.map, unit.index, unit.moveRadius);
+    //     engine.targetIndex = moveRange[moveRange.length - 1];
+    // },
+    // end: function (obj) {
+    //     obj.isStarted = false;
+    // },
     run: function (unit) {
+        console.log('move fire');
         if(!unit.isMoving){
             var moveRange = calMoveRange(game.map, unit.index, unit.moveRadius);
             if(!moveRange || moveRange.length == 1){
@@ -73,22 +74,36 @@ BehaviorTree.register('move-fire', new BehaviorTree.Task({
 BehaviorTree.register('fire', new BehaviorTree.Task({
     title: 'fire',
     run: function (unit) {
-        console.log('fire');
-        unit.flag = true;
-        this.success();
+        // unit.flag = true;
+        var target = engine.units.map(i => i.index);
+        let fireRange = calFireRange(unit.index, unit.fireRadius)
+        let intersectArray = intersect(fireRange, target);
+        if(intersectArray.length === 0){
+            console.log('fire fail');
+            this.fail()
+        } else if(!unit.isFiring){
+            engine.targetIndex = intersectArray[0];
+            engine.attack(() => {
+                unit.flag = true;
+                this.success();
+            });
+        }
+        this.running();
     }
 }));
 BehaviorTree.register('move', new BehaviorTree.Task({
     title: 'move',
     run: function (unit) {
         console.log('move');
+        unit.flag = true;
         this.success();
     }
 }));
 BehaviorTree.register('idle', new BehaviorTree.Task({
     title: 'idle',
     run: function (unit) {
-        console.log('move');
+        console.log('idle');
+        unit.flag = true;
         this.success();
     }
 }));

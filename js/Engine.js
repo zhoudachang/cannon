@@ -12,7 +12,7 @@ class Engine {
             title: 'enemy action',
             tree: new BehaviorTree.Priority({
                 nodes: [
-                    'move-fire', 'fire', 'move', 'idle'
+                    'fire','move-fire','move', 'idle'
                 ]
             })
         });
@@ -60,7 +60,8 @@ class Engine {
         });
     }
 
-    attack() {
+    attack(callback) {
+        let speed = 1;
         this.current.isFiring = true;
         var attackTimeLine = new TimelineLite();
         var currnetVector = toPosition(this.current.index);
@@ -71,7 +72,7 @@ class Engine {
         angle = (dirProject.y > 0 ? angle : -angle);
         attackTimeLine.add(TweenLite.to(this.current.tubeControl.rotation, .5, { y: angle }));
         this.current.mesh.updateMatrixWorld();
-        let p = ["-=0.99", "-=0.98", "-=0.97", "-=0.96", "-=0.95", "-=0.94", "-=0.93", "-=0.92", "-=0.91","-0.90"];
+        let p = ["-=0", "-=0.98", "-=0.97", "-=0.96", "-=0.95", "-=0.94", "-=0.93", "-=0.92", "-=0.91","-0.90"];
         for (var i = 0; i < 10; i++) {
             let f = new Particle();
             let maxSneezingRate = 1;
@@ -126,30 +127,36 @@ class Engine {
             }];
             let fdir = this.current.tubeDirection.clone();
             attackTimeLine.add(
-                [ TweenMax.to(f.mesh.position, 1, {
+                [ TweenMax.to(f.mesh.position, speed, {
                         x:f.mesh.position.x + fdir.x * 10,
                         y:f.mesh.position.y + fdir.y * 10 + 5,
                         z:f.mesh.position.z + fdir.z * 10,
                     }),
-                    TweenMax.to(f.mesh.rotation, 1, {
+                    TweenMax.to(f.mesh.rotation, speed, {
                         x: Math.random() * Math.PI * 3,
                         z: Math.random() * Math.PI * 3,
                     }),
-                    TweenMax.to(f.mesh.scale, 1, {
+                    TweenMax.to(f.mesh.scale, speed, {
                         bezier: bezierScale,
                         ease: Strong.easeOut
                     }),
-                    TweenMax.to(f.mesh.material, 1, {
+                    TweenMax.to(f.mesh.material,speed, {
                         opacity: 0,
                         ease: Strong.easeOut
                     }),
-                    TweenMax.to(f.color, 1, {
+                    TweenMax.to(f.color, speed, {
                         bezier: bezierColor,
                         ease: Strong.easeOut,
                         onUpdate: () => f.updateColor()
                     })], p[i], "start", 0);
         }
-        attackTimeLine.call(() => { this.current.isFiring = false });
+        attackTimeLine.call(() => { 
+            if(callback){
+                callback();
+            }
+            this.current.isFiring = false;
+            console.log('fire finished');
+        });
     }
 
     selectedUnit(pos) {
