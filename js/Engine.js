@@ -63,7 +63,6 @@ class Engine {
     attack() {
         this.current.isFiring = true;
         var attackTimeLine = new TimelineLite();
-        console.log(this.current.index, this.targetIndex);
         var currnetVector = toPosition(this.current.index);
         var targetVector = toPosition(this.targetIndex);//new THREE.Vector3(this.targetIndex[1],0,this.targetIndex[0]);
         var dir = targetVector.clone().sub(currnetVector).normalize();
@@ -72,10 +71,10 @@ class Engine {
         angle = (dirProject.y > 0 ? angle : -angle);
         attackTimeLine.add(TweenLite.to(this.current.tubeControl.rotation, .5, { y: angle }));
         this.current.mesh.updateMatrixWorld();
-        for (var i = 0; i < 5; i++) {
-            // var bezierColor = ;
-            var f = new Particle();
-            var maxSneezingRate = 1;
+        let p = ["-=0.99", "-=0.98", "-=0.97", "-=0.96", "-=0.95", "-=0.94", "-=0.93", "-=0.92", "-=0.91","-0.90"];
+        for (var i = 0; i < 10; i++) {
+            let f = new Particle();
+            let maxSneezingRate = 1;
             f.mesh.position.copy(this.current.tubeTop.getWorldPosition(new THREE.Vector3()));
             f.mesh.translateOnAxis(this.current.tubeDirection, 1);
             f.color = {
@@ -86,34 +85,69 @@ class Engine {
             f.mesh.material.color.setRGB(f.color.r, f.color.g, f.color.b);
             f.mesh.material.opacity = 1;
             this.current.mesh.parent.add(f.mesh);
-            var initX = f.mesh.position.x;
-            var initY = f.mesh.position.y;
-            var initZ = f.mesh.position.z;
-            // var bezierScale = [{ x: 1, y: 1, z: 1 }, {
-            //     x: f / maxSneezingRate + Math.random() * .3,
-            //     y: f / maxSneezingRate + Math.random() * .3,
-            //     z: f * 2 / maxSneezingRate + Math.random() * .3
-            // }, {
-            //     x: f / maxSneezingRate + Math.random() * .5,
-            //     y: f / maxSneezingRate + Math.random() * .5,
-            //     z: f * 2 / maxSneezingRate + Math.random() * .5
-            // }, {
-            //     x: f * 2 / maxSneezingRate + Math.random() * .5,
-            //     y: f * 2 / maxSneezingRate + Math.random() * .5,
-            //     z: f * 4 / maxSneezingRate + Math.random() * .5
-            // }, {
-            //     x: f * 2 + Math.random() * 5,
-            //     y: f * 2 + Math.random() * 5,
-            //     z: f * 2 + Math.random() * 5
-            // }];
-            var linePosition = 0;
-            attackTimeLine.add([
-                TweenLite.to(f.mesh.position, 1, { x: initX, y: initY, z : initZ + 5 }), 
-                TweenLite.to(f.mesh.rotation, 1, { x: Math.random() * Math.PI * 3, y: Math.random() * Math.PI * 3 }),
-                // TweenLite.to(f.mesh.scale, 1 , { x:3,y:3,z:3, ease: Strong.easeOut}),// onComplete: () => f.initialize()
-                TweenLite.to(f.mesh.material, 1, { opacity: 0, ease: Strong.easeOut }),
-            ],"-=0.9");
-            // linePosition += 0.1*i;
+            let af = 1;
+            let bezierColor = [{
+                r: 255 / 255,
+                g: 205 / 255,
+                b: 74 / 255
+            }, {
+                r: 255 / 255,
+                g: 205 / 255,
+                b: 74 / 255
+            }, {
+                r: 255 / 255,
+                g: 205 / 255,
+                b: 74 / 255
+            }, {
+                r: 247 / 255,
+                g: 34 / 255,
+                b: 50 / 255
+            }, {
+                r: 0 / 255,
+                g: 0 / 255,
+                b: 0 / 255
+            }];
+            let bezierScale = [{ x: 1, y: 1, z: 1 }, {
+                x: af / maxSneezingRate + Math.random() * .3,
+                y: af / maxSneezingRate + Math.random() * .3,
+                z: af * 2 / maxSneezingRate + Math.random() * .3
+            }, {
+                x: af / maxSneezingRate + Math.random() * .5,
+                y: af / maxSneezingRate + Math.random() * .5,
+                z: af * 2 / maxSneezingRate + Math.random() * .5
+            }, {
+                x: af * 2 / maxSneezingRate + Math.random() * .5,
+                y: af * 2 / maxSneezingRate + Math.random() * .5,
+                z: af * 4 / maxSneezingRate + Math.random() * .5
+            }, {
+                x: af * 2 + Math.random() * 5,
+                y: af * 2 + Math.random() * 5,
+                z: af * 2 + Math.random() * 5
+            }];
+            let fdir = this.current.tubeDirection.clone();
+            attackTimeLine.add(
+                [ TweenMax.to(f.mesh.position, 1, {
+                        x:f.mesh.position.x + fdir.x * 10,
+                        y:f.mesh.position.y + fdir.y * 10 + 5,
+                        z:f.mesh.position.z + fdir.z * 10,
+                    }),
+                    TweenMax.to(f.mesh.rotation, 1, {
+                        x: Math.random() * Math.PI * 3,
+                        z: Math.random() * Math.PI * 3,
+                    }),
+                    TweenMax.to(f.mesh.scale, 1, {
+                        bezier: bezierScale,
+                        ease: Strong.easeOut
+                    }),
+                    TweenMax.to(f.mesh.material, 1, {
+                        opacity: 0,
+                        ease: Strong.easeOut
+                    }),
+                    TweenMax.to(f.color, 1, {
+                        bezier: bezierColor,
+                        ease: Strong.easeOut,
+                        onUpdate: () => f.updateColor()
+                    })], p[i], "start", 0);
         }
         attackTimeLine.call(() => { this.current.isFiring = false });
     }
