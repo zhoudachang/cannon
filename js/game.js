@@ -39,7 +39,8 @@ var raycaster = new THREE.Raycaster();
 var mouseVector = new THREE.Vector3();
 
 var scene, camera, renderer, controls;
-var hudScene, hudCamera;
+var hudScene, hudCamera, hudSprites;
+
 var engine, cannon, tank;
 var ambientLight, hemisphereLight, shadowLight;
 var HEIGHT, WIDTH, mousePos = {
@@ -72,6 +73,8 @@ function createHUD() {
     hudCamera = new THREE.OrthographicCamera(-WIDTH / 2, WIDTH / 2, HEIGHT / 2, -HEIGHT / 2, 1, 10);
     hudCamera.position.z = 10;
     hudScene = new THREE.Scene();
+    hudSprites = new HUDSprites();
+    // hudScene.add(hudSprites);
 }
 
 function createScene() {
@@ -85,10 +88,10 @@ function createScene() {
         10000
     );
     scene.fog = new THREE.Fog(0xf7d9aa, 100, 950);
-    camera.position.x = 100;
+    // camera.position.x = 100;
     camera.position.z = 100;
-    camera.position.y = 100;
-    camera.lookAt(new THREE.Vector3(-50, 0, 0));
+    // camera.position.y = 100;
+    // camera.lookAt(new THREE.Vector3(-50, 0, 0));
     renderer = new THREE.WebGLRenderer({
         alpha: true,
         antialias: true
@@ -99,7 +102,7 @@ function createScene() {
     renderer.gammaInput = true;
     container = document.body;
     container.appendChild(renderer.domElement);
-    var controls = new THREE.OrbitControls(camera);
+    // var controls = new THREE.OrbitControls(camera);
     scene.add(new THREE.GridHelper(100));
     scene.add(new THREE.AxesHelper(100));
     window.addEventListener('resize', handleWindowResize, false);
@@ -111,6 +114,12 @@ function handleWindowResize() {
     renderer.setSize(WIDTH, HEIGHT);
     camera.aspect = WIDTH / HEIGHT;
     camera.updateProjectionMatrix();
+
+    hudCamera.left = - WIDTH / 2;
+    hudCamera.right = WIDTH / 2;
+    hudCamera.top = HEIGHT / 2;
+    hudCamera.bottom = - HEIGHT / 2;
+    hudCamera.updateProjectionMatrix();
 }
 
 function createLights() {
@@ -372,7 +381,7 @@ class Tank extends Unit {
             ease: Bounce.easeOut
         }).reverse(.5);
     }
-    move() {}
+    move() { }
 
     // shoot(target) {
 
@@ -573,6 +582,7 @@ function init(event) {
                     entity = new Cannon();
                     break;
             }
+
             entity.index = unit.index;
             entity.mesh.position.copy(toPosition(unit.index));
             scene.add(entity.mesh);
@@ -597,6 +607,8 @@ function init(event) {
                 }
             }
             createScene();
+            createHUD();
+
             createGroud(game.stageWidth, game.stageHeight);
             createLights();
             placeUnit(stageData.user, engine.units);
@@ -701,7 +713,10 @@ function handleMouseMove(event) {
 function loop() {
     engine.update();
     stats.update();
+    renderer.clear();
     renderer.render(scene, camera);
+    renderer.clearDepth();
+    // renderer.render(hudScene, hudCamera);
     requestAnimationFrame(loop);
 }
 

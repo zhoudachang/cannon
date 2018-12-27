@@ -13,3 +13,27 @@ function roundRect(ctx, x, y, w, h, r) {
     ctx.fill();
     ctx.stroke();
 }
+
+class HUDSprites {
+
+    constructor(){
+        // this.mesh = new THREE.Object3D();
+        var textureLoader = new THREE.TextureLoader();
+        textureLoader.load( "/images/t1.png", this.createHUDSprites );
+    }
+
+    createHUDSprites( texture ) {
+        var material = new THREE.SpriteMaterial( { map: texture } );
+        var width = material.map.image.width;
+        var height = material.map.image.height;
+        console.log(width,height);
+        var sprite = new THREE.Sprite( material );
+        sprite.position.set( - WIDTH/2, - HEIGHT/2, 1 );
+        sprite.scale.set( width/2, height/2, 1 );
+        hudScene.add(sprite);
+        // this.mesh.add(sprite);
+    }
+
+    render(){
+    }
+}
