@@ -1,3 +1,91 @@
+BehaviorTree.register('fire', new BehaviorTree.Task({
+    title: 'fire',
+    run: function (unit) {
+        var target = engine.units.map(i => i.index);
+        let fireRange = calFireRange(unit.index, unit.fireRadius);
+        let intersectArray = intersect(fireRange, target);
+        if (intersectArray.length === 0) {
+            this.fail();
+        } else if (!unit.isFiring) {
+            engine.targetIndex = intersectArray[0];
+            engine.attack(() => {
+                unit.flag = true;
+                this.success();
+            });
+        }
+        this.running();
+    }
+}));
+
+BehaviorTree.register('move-fire', new BehaviorTree.Task({
+    title: 'move-fire',
+    // start: function (unit) {
+    //     var moveRange = calMoveRange(game.map, unit.index, unit.moveRadius);
+    //     engine.targetIndex = moveRange[moveRange.length - 1];
+    // },
+    // end: function (obj) {
+    //     obj.isStarted = false;
+    // },
+    run: function (unit) {
+        console.log('move fire ');
+        if (!unit.isMoving && !unit.isFiring) {
+            let moveRange = calMoveRange(game.map, unit.index, unit.moveRadius);
+            let impArray = [];//4 length sub element
+            engine.units.forEach(target => {
+                var fireRange = calFireRange(target.index,unit.fireRadius);
+                var itstArrays = intersect(moveRange,fireRange);
+                if(itstArrays && itstArrays.length > 0){
+                    console.log(itstArrays);
+                    itstArrays = itstArrays.map(itst => itst.concat(target.index));
+                    impArray = impArray.concat(itstArrays);
+                }
+            });
+            if (impArray.length > 0) {
+                let route = impArray[impArray.length - 1];
+                engine.targetIndex = [route[0],route[1]];
+                engine.driveUnit(() => {
+                    engine.targetIndex = [route[2],route[3]];
+                    engine.attack(() => {
+                        unit.flag = true;
+                        this.success();
+                    });
+                });
+            } else {
+                this.fail();
+                return;
+            }
+
+        }
+        this.running();
+    }
+}));
+
+BehaviorTree.register('move', new BehaviorTree.Task({
+    title: 'move',
+    run: function (unit) {
+        var moveRange = calMoveRange(game.map, unit.index, unit.moveRadius);
+        if(moveRange.length > 1) {
+            //TODO targetIndex
+            engine.targetIndex = moveRange[0];
+            engine.driveUnit(() => {
+                unit.flag = true;
+            });
+            console.log('move');
+            this.success();
+        } else {
+            this.fail();
+        }
+    }
+}));
+BehaviorTree.register('idle', new BehaviorTree.Task({
+    title: 'idle',
+    run: function (unit) {
+        console.log('idle');
+        unit.flag = true;
+        this.success();
+    }
+}));
+
 class Engine {
     constructor() {
         //pending - selected - unitMove - penddingFire - unitFire - over - pending
@@ -12,17 +100,20 @@ class Engine {
             title: 'enemy action',
             tree: new BehaviorTree.Priority({
                 nodes: [
-                    'fire','move-fire','move', 'idle'
+                    'fire', 'move-fire', 'move', 'idle'
                 ]
             })
         });
     }
     driveUnit(callback) {
+        this.isWorking = true;
         this.current.isMoving = true;
         var moveTimeLine = new TimelineLite();
         var routes = findPath(game.map, this.current.index, this.targetIndex);
         var routeArray = tweenPath(routes);
-        moveTimeLine.add(TweenLite.to(this.current.tubeControl.rotation, .5, { y: 0 }));
+        moveTimeLine.add(TweenLite.to(this.current.tubeControl.rotation, .5, {
+            y: 0
+        }));
         routeArray.forEach(route => {
             var vars = {};
             var routeDirection;
@@ -52,6 +143,7 @@ class Engine {
             this.current.isMoving = false;
             game.map[this.current.index[0]][this.current.index[1]] = 0;
             this.current.index = this.targetIndex;
+            this.isWorking = false;
             game.map[this.current.index[0]][this.current.index[1]] = 1;
             this.state = 'pendingFire';
             if (callback) {
@@ -61,105 +153,122 @@ class Engine {
     }
 
     attack(callback) {
-        let speed = 1;
+        this.isWorking = true;
         this.current.isFiring = true;
-        var attackTimeLine = new TimelineLite();
+        let speed = 1;
         var currnetVector = toPosition(this.current.index);
-        var targetVector = toPosition(this.targetIndex);//new THREE.Vector3(this.targetIndex[1],0,this.targetIndex[0]);
+        var targetVector = toPosition(this.targetIndex); //new THREE.Vector3(this.targetIndex[1],0,this.targetIndex[0]);
         var dir = targetVector.clone().sub(currnetVector).normalize();
         var angle = this.current.tubeDirection.angleTo(dir);
         var dirProject = this.current.tubeDirection.clone().cross(dir);
         angle = (dirProject.y > 0 ? angle : -angle);
-        attackTimeLine.add(TweenLite.to(this.current.tubeControl.rotation, .5, { y: angle }));
-        this.current.mesh.updateMatrixWorld();
-        let p = ["-=0", "-=0.98", "-=0.97", "-=0.96", "-=0.95", "-=0.94", "-=0.93", "-=0.92", "-=0.91","-0.90"];
-        for (var i = 0; i < 10; i++) {
-            let f = new Particle();
-            let maxSneezingRate = 1;
-            f.mesh.position.copy(this.current.tubeTop.getWorldPosition(new THREE.Vector3()));
-            f.mesh.translateOnAxis(this.current.tubeDirection, 1);
-            f.color = {
-                r: 255 / 255,
-                g: 205 / 255,
-                b: 74 / 255
-            };
-            f.mesh.material.color.setRGB(f.color.r, f.color.g, f.color.b);
-            f.mesh.material.opacity = 1;
-            this.current.mesh.parent.add(f.mesh);
-            let af = 1;
-            let bezierColor = [{
-                r: 255 / 255,
-                g: 205 / 255,
-                b: 74 / 255
-            }, {
-                r: 255 / 255,
-                g: 205 / 255,
-                b: 74 / 255
-            }, {
-                r: 255 / 255,
-                g: 205 / 255,
-                b: 74 / 255
-            }, {
-                r: 247 / 255,
-                g: 34 / 255,
-                b: 50 / 255
-            }, {
-                r: 0 / 255,
-                g: 0 / 255,
-                b: 0 / 255
-            }];
-            let bezierScale = [{ x: 1, y: 1, z: 1 }, {
-                x: af / maxSneezingRate + Math.random() * .3,
-                y: af / maxSneezingRate + Math.random() * .3,
-                z: af * 2 / maxSneezingRate + Math.random() * .3
-            }, {
-                x: af / maxSneezingRate + Math.random() * .5,
-                y: af / maxSneezingRate + Math.random() * .5,
-                z: af * 2 / maxSneezingRate + Math.random() * .5
-            }, {
-                x: af * 2 / maxSneezingRate + Math.random() * .5,
-                y: af * 2 / maxSneezingRate + Math.random() * .5,
-                z: af * 4 / maxSneezingRate + Math.random() * .5
-            }, {
-                x: af * 2 + Math.random() * 5,
-                y: af * 2 + Math.random() * 5,
-                z: af * 2 + Math.random() * 5
-            }];
-            let fdir = this.current.tubeDirection.clone();
-            attackTimeLine.add(
-                [ TweenMax.to(f.mesh.position, speed, {
-                        x:f.mesh.position.x + fdir.x * 10,
-                        y:f.mesh.position.y + fdir.y * 10 + 5,
-                        z:f.mesh.position.z + fdir.z * 10,
-                    }),
-                    TweenMax.to(f.mesh.rotation, speed, {
-                        x: Math.random() * Math.PI * 3,
-                        z: Math.random() * Math.PI * 3,
-                    }),
-                    TweenMax.to(f.mesh.scale, speed, {
-                        bezier: bezierScale,
-                        ease: Strong.easeOut
-                    }),
-                    TweenMax.to(f.mesh.material,speed, {
-                        opacity: 0,
-                        ease: Strong.easeOut
-                    }),
-                    TweenMax.to(f.color, speed, {
-                        bezier: bezierColor,
-                        ease: Strong.easeOut,
-                        onUpdate: () => f.updateColor()
-                    })], p[i], "start", 0);
-        }
-        attackTimeLine.call(() => { 
-            if(callback){
-                callback();
+        TweenMax.to(this.current.tubeControl.rotation, .5, {
+            y: angle,
+            onComplete: () => {
+                var attackTimeLine = new TimelineLite();
+                let p = ["-=0", "-=0.99","-=0.98", "-=0.97", "-=0.96", "-=0.95", "-=0.94", "-=0.93", "-=0.92", "-=0.91", "-0.90"];
+                let tubePosWorld = this.current.tubeTop.getWorldPosition(new THREE.Vector3());
+                for (var i = 0; i < 5; i++) {
+                    let f = new Particle();
+                    let maxSneezingRate = 1;
+                    f.mesh.position.copy(tubePosWorld);
+                    var fdir = this.current.tubeDirection.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), angle);
+                    f.mesh.translateOnAxis(fdir, 1);
+                    f.color = {
+                        r: 255 / 255,
+                        g: 205 / 255,
+                        b: 74 / 255
+                    };
+                    f.mesh.material.color.setRGB(f.color.r, f.color.g, f.color.b);
+                    f.mesh.material.opacity = 1;
+                    this.current.mesh.parent.add(f.mesh);
+                    let af = 1;
+                    let bezierColor = [{
+                        r: 255 / 255,
+                        g: 205 / 255,
+                        b: 74 / 255
+                    }, {
+                        r: 255 / 255,
+                        g: 205 / 255,
+                        b: 74 / 255
+                    }, {
+                        r: 255 / 255,
+                        g: 205 / 255,
+                        b: 74 / 255
+                    }, {
+                        r: 247 / 255,
+                        g: 34 / 255,
+                        b: 50 / 255
+                    }, {
+                        r: 0 / 255,
+                        g: 0 / 255,
+                        b: 0 / 255
+                    }];
+                    let bezierScale = [{
+                        x: 1,
+                        y: 1,
+                        z: 1
+                    }, {
+                        x: af / maxSneezingRate + Math.random() * .3,
+                        y: af / maxSneezingRate + Math.random() * .3,
+                        z: af * 2 / maxSneezingRate + Math.random() * .3
+                    }, {
+                        x: af / maxSneezingRate + Math.random() * .5,
+                        y: af / maxSneezingRate + Math.random() * .5,
+                        z: af * 2 / maxSneezingRate + Math.random() * .5
+                    }, {
+                        x: af * 2 / maxSneezingRate + Math.random() * .5,
+                        y: af * 2 / maxSneezingRate + Math.random() * .5,
+                        z: af * 4 / maxSneezingRate + Math.random() * .5
+                    }, {
+                        x: af * 2 + Math.random() * 5,
+                        y: af * 2 + Math.random() * 5,
+                        z: af * 2 + Math.random() * 5
+                    }];
+                    attackTimeLine.add(
+                        [TweenMax.to(f.mesh.position, speed, {
+                                x: f.mesh.position.x + fdir.x * 20,
+                                y: f.mesh.position.y + fdir.y * 20 + 5,
+                                z: f.mesh.position.z + fdir.z * 20
+                            }),
+                            TweenMax.to(f.mesh.rotation, speed, {
+                                x: Math.random() * Math.PI * 3,
+                                z: Math.random() * Math.PI * 3,
+                            }),
+                            TweenMax.to(f.mesh.scale, speed, {
+                                bezier: bezierScale,
+                                ease: Strong.easeOut
+                            }),
+                            TweenMax.to(f.mesh.material, speed, {
+                                opacity: 0,
+                                ease: Strong.easeOut
+                            }),
+                            TweenMax.to(f.color, speed, {
+                                bezier: bezierColor,
+                                ease: Strong.easeOut,
+                                onUpdate: () => f.updateColor()
+                            })
+                        ], p[i], "start", 0);
+                }
+                attackTimeLine.call(() => {
+                    this.current.isFiring = false;
+                    console.log(this.current);
+                    this.current.flag = true;
+                    this.isWorking = false;
+                    console.log('fire finished');
+                    if (callback) {
+                        callback();
+                    }
+                });
             }
-            this.current.isFiring = false;
-            console.log('fire finished');
         });
+
     }
 
     selectedUnit(pos) {
+        if(this.isWorking){
+            return;
+        }
         var select;
         this.units.forEach(item => {
             if (item.index[0] == pos[0] && item.index[1] == pos[1]) {
@@ -172,6 +281,9 @@ class Engine {
     }
 
     selectedEnnemy(pos) {
+        if(this.isWorking){
+            return;
+        }
         var select;
         this.ennemies.forEach(item => {
             if (item.index[0] == pos[0] && item.index[1] == pos[1]) {
@@ -240,11 +352,9 @@ class Engine {
                     }
                     break;
                 case "unitFire":
-                    // this.current.shoot();
                     this.attack();
                     resetGround();
                     this.state = "pending";
-                    this.current.flag = true;
                     break;
             }
         }

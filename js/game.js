@@ -28,7 +28,7 @@ var redMat = new THREE.MeshLambertMaterial({
 var particlesPool = [];
 var particlesInUse = [];
 var game = {
-    round:1,
+    round: 1,
     stageWidth: 100,
     stageHeight: 100,
     segmentsLength: 10,
@@ -39,74 +39,16 @@ var raycaster = new THREE.Raycaster();
 var mouseVector = new THREE.Vector3();
 
 var scene, camera, renderer, controls;
+var hudScene, hudCamera;
 var engine, cannon, tank;
 var ambientLight, hemisphereLight, shadowLight;
 var HEIGHT, WIDTH, mousePos = {
     x: 0,
     y: 0
 };
-BehaviorTree.register('move-fire', new BehaviorTree.Task({
-    title: 'move-fire',
-    // start: function (unit) {
-    //     var moveRange = calMoveRange(game.map, unit.index, unit.moveRadius);
-    //     engine.targetIndex = moveRange[moveRange.length - 1];
-    // },
-    // end: function (obj) {
-    //     obj.isStarted = false;
-    // },
-    run: function (unit) {
-        console.log('move fire');
-        if(!unit.isMoving){
-            var moveRange = calMoveRange(game.map, unit.index, unit.moveRadius);
-            if(!moveRange || moveRange.length == 1){
-                this.fail();
-                return;
-            }
-            engine.targetIndex = moveRange[moveRange.length - 1];
-            engine.driveUnit(() => {
-                unit.flag = true;
-                this.success();
-            });
-        }
-        this.running();
-    }
-}));
-BehaviorTree.register('fire', new BehaviorTree.Task({
-    title: 'fire',
-    run: function (unit) {
-        // unit.flag = true;
-        var target = engine.units.map(i => i.index);
-        let fireRange = calFireRange(unit.index, unit.fireRadius)
-        let intersectArray = intersect(fireRange, target);
-        if(intersectArray.length === 0){
-            console.log('fire fail');
-            this.fail()
-        } else if(!unit.isFiring){
-            engine.targetIndex = intersectArray[0];
-            engine.attack(() => {
-                unit.flag = true;
-                this.success();
-            });
-        }
-        this.running();
-    }
-}));
-BehaviorTree.register('move', new BehaviorTree.Task({
-    title: 'move',
-    run: function (unit) {
-        console.log('move');
-        unit.flag = true;
-        this.success();
-    }
-}));
-BehaviorTree.register('idle', new BehaviorTree.Task({
-    title: 'idle',
-    run: function (unit) {
-        console.log('idle');
-        unit.flag = true;
-        this.success();
-    }
-}));
+
+HEIGHT = window.innerHeight;
+WIDTH = window.innerWidth;
 
 function resetGround() {
     var battleMapMesh = scene.getObjectByName('ground');
@@ -126,9 +68,13 @@ function renderGround(range, matIndex = 0) {
     });
 }
 
+function createHUD() {
+    hudCamera = new THREE.OrthographicCamera(-WIDTH / 2, WIDTH / 2, HEIGHT / 2, -HEIGHT / 2, 1, 10);
+    hudCamera.position.z = 10;
+    hudScene = new THREE.Scene();
+}
+
 function createScene() {
-    HEIGHT = window.innerHeight;
-    WIDTH = window.innerWidth;
     scene = new THREE.Scene();
     nearPlane = .1;
     farPlane = 10000;
@@ -188,21 +134,21 @@ function createLights() {
     scene.add(ambientLight);
 }
 class Unit {
-    constructor (){
+    constructor() {
         this.mesh = new THREE.Object3D();
         this.mesh.castShadow = true;
     }
 
-    get tubeControl (){
+    get tubeControl() {
         return this.mesh.getObjectByName('tubeControl');
     }
 
-    get tubeTop(){
+    get tubeTop() {
         return this.mesh.getObjectByName('tubeTop');
     }
 }
 
-class Cannon extends Unit{
+class Cannon extends Unit {
     constructor() {
         super();
         this.params = {
@@ -228,7 +174,7 @@ class Cannon extends Unit{
         geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
         var hatMesh = new THREE.Mesh(geometry, whiteMat);
         hatMesh.name = 'hatMesh';
-        hatMesh.position.y += baseHeight/2;
+        hatMesh.position.y += baseHeight / 2;
         var geometry = new THREE.CylinderGeometry(baseRadiusTop - 1, baseRadiusBottom - 1, baseHeight, 20);
         var horizontalAxle = new THREE.Mesh(geometry, blackMat);
         horizontalAxle.name = 'horizontalControl';
@@ -239,7 +185,7 @@ class Cannon extends Unit{
         var tubeMesh = new THREE.Mesh(tubeGemo, blackMat);
         tubeMesh.position.set(-10, 0, 0);
         horizontalAxle.add(tubeMesh);
-        horizontalAxle.rotation.z -= Math.PI/4;
+        horizontalAxle.rotation.z -= Math.PI / 4;
         var tubeGemo2 = new THREE.CylinderGeometry(0.8, 0.8, 10, tubeSegments);
         tubeGemo2.applyMatrix(new THREE.Matrix4().makeRotationZ(-Math.PI / 2));
         var tubeMesh2 = new THREE.Mesh(tubeGemo2, blackMat);
@@ -308,7 +254,7 @@ class Shell {
         }
     }
 }
-class Tank extends Unit{
+class Tank extends Unit {
     constructor() {
         super();
         this.direction = new THREE.Vector3(1, 0, 0);
@@ -321,7 +267,7 @@ class Tank extends Unit{
         this.shape();
     }
 
-    shape(){
+    shape() {
         var bodyShape = new THREE.Shape();
         bodyShape.moveTo(5, 0);
         bodyShape.lineTo(3, -2);
@@ -387,25 +333,27 @@ class Tank extends Unit{
         this.mesh.add(backWheelMesh, backLeftWheelMesh);
         this.wheels.push(backWheelMesh);
         this.wheels.push(backLeftWheelMesh);
-        var canvas = document.createElement('canvas');
-        canvas.width = 128;
-        canvas.height = 32;
-        var ctx = canvas.getContext('2d');
-        ctx.lineJoin = "round";
-        ctx.fillStyle = '#F0FFF0';
-        ctx.fillRect(0, 0, 128, 4);
-        ctx.fillStyle = '#228B22';
-        ctx.fillRect(2, 1, 64, 2);
-        var texture = new THREE.Texture(canvas);
-        texture.needsUpdate = true;
-        var spriteMaterial = new THREE.SpriteMaterial({
-            map: texture,
-            transparent: true
-        });
-        var sprite = new THREE.Sprite(spriteMaterial);
-        sprite.position.set(0, 8, 0);
-        sprite.scale.set(30, 30, 30);
-        this.mesh.add(sprite);
+
+        // var canvas = document.createElement('canvas');
+        // canvas.width = 128;
+        // canvas.height = 32;
+        // var ctx = canvas.getContext('2d');
+        // ctx.lineJoin = "round";
+        // ctx.fillStyle = '#F0FFF0';
+        // ctx.fillRect(0, 0, 128, 4);
+        // ctx.fillStyle = '#228B22';
+        // ctx.fillRect(2, 1, 64, 2);
+        // var texture = new THREE.Texture(canvas);
+        // texture.needsUpdate = true;
+        // var spriteMaterial = new THREE.SpriteMaterial({
+        //     map: texture,
+        //     transparent: true
+        // });
+        // var sprite = new THREE.Sprite(spriteMaterial);
+        // sprite.position.set(0, 8, 0);
+        // sprite.scale.set(30, 30, 30);
+        // this.mesh.add(sprite);
+
         this.mesh.traverse(function (object) {
             if (object instanceof THREE.Mesh) {
                 object.castShadow = true;
@@ -696,18 +644,18 @@ function handleMouseUp() {
         var index = toIndex(findex1 > findex2 ? findex2 : findex1);
         if (engine.state == 'pending') {
             var selectUnit = engine.selectedUnit(index);
-            if(selectUnit && !selectUnit.flag){
+            if (selectUnit && !selectUnit.flag) {
                 engine.state = 'selected';
             }
-        // } else if (groundMesh.geometry.faces[res.faceIndex].materialIndex == 2) { //selected state
-        } else if(engine.state == 'pendingMove' && groundMesh.geometry.faces[res.faceIndex].materialIndex == 2) {
+            // } else if (groundMesh.geometry.faces[res.faceIndex].materialIndex == 2) { //selected state
+        } else if (engine.state == 'pendingMove' && groundMesh.geometry.faces[res.faceIndex].materialIndex == 2) {
             engine.targetIndex = index;
             engine.state = 'unitMove';
-        // } else if (groundMesh.geometry.faces[res.faceIndex].materialIndex == 3) { //
-        } else if(engine.state == 'pendingFire' && groundMesh.geometry.faces[res.faceIndex].materialIndex == 3) {
+            // } else if (groundMesh.geometry.faces[res.faceIndex].materialIndex == 3) { //
+        } else if (engine.state == 'pendingFire' && groundMesh.geometry.faces[res.faceIndex].materialIndex == 3) {
             engine.targetIndex = index;
             var target = engine.selectedEnnemy(index);
-            if(target){
+            if (target) {
                 engine.target = target;
             }
             engine.state = 'unitFire';
