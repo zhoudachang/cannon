@@ -73,25 +73,25 @@ function createHUD() {
     hudCamera = new THREE.OrthographicCamera(-WIDTH / 2, WIDTH / 2, HEIGHT / 2, -HEIGHT / 2, 1, 10);
     hudCamera.position.z = 10;
     hudScene = new THREE.Scene();
-    hudSprites = new HUDSprites();
-    // hudScene.add(hudSprites);
+    hudSprites = new HUDSprites(engine);
+    hudScene.add(hudSprites.mesh);
 }
 
 function createScene() {
     scene = new THREE.Scene();
-    nearPlane = .1;
+    nearPlane = 1;
     farPlane = 10000;
     camera = new THREE.PerspectiveCamera(
         50,
         WIDTH / HEIGHT,
-        .1,
-        10000
+        nearPlane,
+        farPlane
     );
     scene.fog = new THREE.Fog(0xf7d9aa, 100, 950);
-    // camera.position.x = 100;
+    camera.position.x = 100;
     camera.position.z = 100;
-    // camera.position.y = 100;
-    // camera.lookAt(new THREE.Vector3(-50, 0, 0));
+    camera.position.y = 100;
+    camera.lookAt(new THREE.Vector3(-50, 0, 0));
     renderer = new THREE.WebGLRenderer({
         alpha: true,
         antialias: true
@@ -100,9 +100,11 @@ function createScene() {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.gammaInput = true;
+    renderer.autoClear = false;
+
     container = document.body;
     container.appendChild(renderer.domElement);
-    // var controls = new THREE.OrbitControls(camera);
+    var controls = new THREE.OrbitControls(camera);
     scene.add(new THREE.GridHelper(100));
     scene.add(new THREE.AxesHelper(100));
     window.addEventListener('resize', handleWindowResize, false);
@@ -607,12 +609,11 @@ function init(event) {
                 }
             }
             createScene();
-            createHUD();
-
             createGroud(game.stageWidth, game.stageHeight);
             createLights();
             placeUnit(stageData.user, engine.units);
             placeUnit(stageData.ennemies, engine.ennemies);
+            createHUD();
             loop();
         },
         // onProgress callback
@@ -716,7 +717,7 @@ function loop() {
     renderer.clear();
     renderer.render(scene, camera);
     renderer.clearDepth();
-    // renderer.render(hudScene, hudCamera);
+    renderer.render(hudScene, hudCamera);
     requestAnimationFrame(loop);
 }
 

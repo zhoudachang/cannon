@@ -30,11 +30,11 @@ BehaviorTree.register('move-fire', new BehaviorTree.Task({
         console.log('move fire ');
         if (!unit.isMoving && !unit.isFiring) {
             let moveRange = calMoveRange(game.map, unit.index, unit.moveRadius);
-            let impArray = [];//4 length sub element
+            let impArray = []; //4 length sub element
             engine.units.forEach(target => {
-                var fireRange = calFireRange(target.index,unit.fireRadius);
-                var itstArrays = intersect(moveRange,fireRange);
-                if(itstArrays && itstArrays.length > 0){
+                var fireRange = calFireRange(target.index, unit.fireRadius);
+                var itstArrays = intersect(moveRange, fireRange);
+                if (itstArrays && itstArrays.length > 0) {
                     console.log(itstArrays);
                     itstArrays = itstArrays.map(itst => itst.concat(target.index));
                     impArray = impArray.concat(itstArrays);
@@ -42,9 +42,9 @@ BehaviorTree.register('move-fire', new BehaviorTree.Task({
             });
             if (impArray.length > 0) {
                 let route = impArray[impArray.length - 1];
-                engine.targetIndex = [route[0],route[1]];
+                engine.targetIndex = [route[0], route[1]];
                 engine.driveUnit(() => {
-                    engine.targetIndex = [route[2],route[3]];
+                    engine.targetIndex = [route[2], route[3]];
                     engine.attack(() => {
                         unit.flag = true;
                         this.success();
@@ -64,7 +64,7 @@ BehaviorTree.register('move', new BehaviorTree.Task({
     title: 'move',
     run: function (unit) {
         var moveRange = calMoveRange(game.map, unit.index, unit.moveRadius);
-        if(moveRange.length > 1) {
+        if (moveRange.length > 1) {
             //TODO targetIndex
             engine.targetIndex = moveRange[0];
             engine.driveUnit(() => {
@@ -104,7 +104,16 @@ class Engine {
                 ]
             })
         });
+        this.handlers = [];
     }
+
+    on(handlerName, callback) {
+        if (!this.handlers[handlerName]) {
+            this.handlers[handlerName] = [];
+        }
+        this.handlers[handlerName].push(callback);
+    }
+
     driveUnit(callback) {
         this.isWorking = true;
         this.current.isMoving = true;
@@ -139,6 +148,7 @@ class Engine {
             }
             moveTimeLine.add(TweenLite.to(this.current.mesh.position, .5, vars));
         });
+
         moveTimeLine.call(() => {
             this.current.isMoving = false;
             game.map[this.current.index[0]][this.current.index[1]] = 0;
@@ -149,6 +159,7 @@ class Engine {
             if (callback) {
                 callback();
             }
+            this.handlers['drive'].forEach(func => func());
         });
     }
 
@@ -166,7 +177,7 @@ class Engine {
             y: angle,
             onComplete: () => {
                 var attackTimeLine = new TimelineLite();
-                let p = ["-=0", "-=0.99","-=0.98", "-=0.97", "-=0.96", "-=0.95", "-=0.94", "-=0.93", "-=0.92", "-=0.91", "-0.90"];
+                let p = ["-=0", "-=0.99", "-=0.98", "-=0.97", "-=0.96", "-=0.95", "-=0.94", "-=0.93", "-=0.92", "-=0.91", "-0.90"];
                 let tubePosWorld = this.current.tubeTop.getWorldPosition(new THREE.Vector3());
                 for (var i = 0; i < 5; i++) {
                     let f = new Particle();
@@ -266,7 +277,7 @@ class Engine {
     }
 
     selectedUnit(pos) {
-        if(this.isWorking){
+        if (this.isWorking) {
             return;
         }
         var select;
@@ -281,7 +292,7 @@ class Engine {
     }
 
     selectedEnnemy(pos) {
-        if(this.isWorking){
+        if (this.isWorking) {
             return;
         }
         var select;
