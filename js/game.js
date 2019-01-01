@@ -1,3 +1,11 @@
+var Colors = {
+    red:0xf25346,
+    white:0xd8d0d1,
+    lightgreen:0x629265,
+    brown:0x59332e,
+    green:0x458248
+}
+
 var whiteMat = new THREE.MeshLambertMaterial({
     color: 0xfaf3d7,
     flatShading: THREE.FlatShading
@@ -97,6 +105,7 @@ function createScene() {
         antialias: true
     });
     renderer.setSize(WIDTH, HEIGHT);
+    renderer.setClearColor(0x0E2255);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.gammaInput = true;
@@ -144,6 +153,12 @@ function createLights() {
     scene.add(shadowLight);
     scene.add(ambientLight);
 }
+
+function createSky(){
+
+}
+
+
 class Unit {
     constructor() {
         this.mesh = new THREE.Object3D();
@@ -385,9 +400,6 @@ class Tank extends Unit {
     }
     move() { }
 
-    // shoot(target) {
-
-    // }
 }
 
 function getParticle() {
@@ -614,6 +626,14 @@ function init(event) {
             placeUnit(stageData.user, engine.units);
             placeUnit(stageData.ennemies, engine.ennemies);
             createHUD();
+            var staff = new Stuff();
+            // staff.stone.position.set(15,0,5);
+            var stone = staff.stone;
+            stone.position.set(15,0,5);
+            scene.add(stone);
+            var tree = staff.tree;
+            tree.position.set(15,0,15);
+            scene.add(tree);
             loop();
         },
         // onProgress callback
@@ -624,18 +644,6 @@ function init(event) {
             console.error('An error happened');
         }
     );
-    // var stageData = JSON.parse(data);
-    // var gui = new dat.GUI();
-    // gui.add(cannon.params, "horizontalAngle", -Math.PI / 2, 0.0);
-    // gui.add(cannon.params, "shellVelocity", 100, 500);
-    // gui.add(cannon.params, "verticalAngle", -Math.PI / 2, Math.PI / 2);
-    // gui.open();
-    // createPlane();
-    // createSea();
-    // createSky();
-    // createCoins();
-    // createEnnemies();
-    // createParticles();
 
     document.addEventListener('mousemove', handleMouseMove, false);
     // document.addEventListener('touchmove', handleTouchMove, false);

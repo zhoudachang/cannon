@@ -1,6 +1,11 @@
 BehaviorTree.register('fire', new BehaviorTree.Task({
     title: 'fire',
     run: function (unit) {
+        console.log('fire');
+        if(unit.isFiring){
+            this.running();
+            return;
+        }
         var target = engine.units.map(i => i.index);
         let fireRange = calFireRange(unit.index, unit.fireRadius);
         let intersectArray = intersect(fireRange, target);
@@ -12,66 +17,73 @@ BehaviorTree.register('fire', new BehaviorTree.Task({
                 unit.flag = true;
                 this.success();
             });
+            this.running();
         }
-        this.running();
     }
 }));
 
 BehaviorTree.register('move-fire', new BehaviorTree.Task({
     title: 'move-fire',
-    // start: function (unit) {
-    //     var moveRange = calMoveRange(game.map, unit.index, unit.moveRadius);
-    //     engine.targetIndex = moveRange[moveRange.length - 1];
-    // },
-    // end: function (obj) {
-    //     obj.isStarted = false;
-    // },
     run: function (unit) {
         console.log('move fire ');
-        if (!unit.isMoving && !unit.isFiring) {
-            let moveRange = calMoveRange(game.map, unit.index, unit.moveRadius);
-            let impArray = []; //4 length sub element
-            engine.units.forEach(target => {
-                var fireRange = calFireRange(target.index, unit.fireRadius);
-                var itstArrays = intersect(moveRange, fireRange);
-                if (itstArrays && itstArrays.length > 0) {
-                    console.log(itstArrays);
-                    itstArrays = itstArrays.map(itst => itst.concat(target.index));
-                    impArray = impArray.concat(itstArrays);
-                }
-            });
-            if (impArray.length > 0) {
-                let route = impArray[impArray.length - 1];
-                engine.targetIndex = [route[0], route[1]];
-                engine.driveUnit(() => {
-                    engine.targetIndex = [route[2], route[3]];
-                    engine.attack(() => {
-                        unit.flag = true;
-                        this.success();
-                    });
-                });
-            } else {
-                this.fail();
-                return;
-            }
-
+        if (unit.isMoving || unit.isFiring) {
+            this.running();
+            return;
         }
-        this.running();
+        let moveRange = calMoveRange(game.map, unit.index, unit.moveRadius);
+        let impArray = []; //4 length sub element
+        engine.units.forEach(target => {
+            var fireRange = calFireRange(target.index, unit.fireRadius);
+            var itstArrays = intersect(moveRange, fireRange);
+            if (itstArrays && itstArrays.length > 0) {
+                itstArrays = itstArrays.map(itst => itst.concat(target.index));
+                impArray = impArray.concat(itstArrays);
+            }
+        });
+        if (impArray.length > 0) {
+            let route = impArray[impArray.length - 1];
+            engine.targetIndex = [route[0], route[1]];
+            engine.driveUnit(() => {
+                engine.targetIndex = [route[2], route[3]];
+                engine.attack(() => {
+                    unit.flag = true;
+                    this.success();
+                });
+            });
+            this.running();
+        } else {
+            this.fail();
+        }
     }
 }));
 
 BehaviorTree.register('move', new BehaviorTree.Task({
     title: 'move',
     run: function (unit) {
+        console.log('move');
+        if(unit.isMoving){
+            this.running();
+            return;
+        }
         var moveRange = calMoveRange(game.map, unit.index, unit.moveRadius);
         if (moveRange.length > 1) {
-            //TODO targetIndex
-            engine.targetIndex = moveRange[0];
+            let unitVec = new THREE.Vector3(unit.index[0],0,unit.index[1]);
+            let distanceArray = engine.units.sort((a,b) => {
+                // unit.
+                var d = new THREE.Vector3(a.index[0],0,a.index[1]).sub(unitVec.clone());
+                var d2 = new THREE.Vector3(b.index[0],0,b.index[1]).sub(unitVec.clone());
+                if(d.length() > d2.length()){
+                    return 1;
+                }
+                return -1;
+            });
+            console.log(distanceArray);
+            engine.targetIndex = moveRange[moveRange.length - 1];
             engine.driveUnit(() => {
                 unit.flag = true;
+                this.success();
             });
-            console.log('move');
-            this.success();
+            this.running();
         } else {
             this.fail();
         }
@@ -263,10 +275,8 @@ class Engine {
                 }
                 attackTimeLine.call(() => {
                     this.current.isFiring = false;
-                    console.log(this.current);
                     this.current.flag = true;
                     this.isWorking = false;
-                    console.log('fire finished');
                     if (callback) {
                         callback();
                     }
@@ -330,7 +340,7 @@ class Engine {
                 game.round += 1;
                 this.units.map(i => i.flag = false);
                 this.ennemies.map(i => i.flag = false);
-                this.current = null;
+                // this.current = null;
                 console.log("round = " + game.round);
                 this.state = "pending";
             } else {

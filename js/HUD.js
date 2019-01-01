@@ -49,9 +49,8 @@ class HUDSprites {
             var material = new THREE.SpriteMaterial({
                 map: texture
             });
-            var width = material.map.image.width;
-            var height = material.map.image.height;
-            console.log(width,height);
+            // var width = material.map.image.width;
+            // var height = material.map.image.height;
             var bgSprite = new THREE.Sprite(material);
             bgSprite.scale.set(this.bgWidth, this.bgWidth, 1);
             bgSprite.position.set(WIDTH / 2 - this.bgWidth / 2 - this.radarMargin, HEIGHT / 2 - this.bgWidth / 2 - this.radarMargin, 1);
@@ -62,7 +61,6 @@ class HUDSprites {
                 });
                 var width = material.map.image.width;
                 this.unitWidth = width;
-                var height = material.map.image.height;
                 this.ennemySprite = new THREE.Sprite(material);
                 this.updateRadar();
             });
@@ -72,7 +70,6 @@ class HUDSprites {
 
     updateRadar() {
         if (this.switch && this.ennemySprite) {
-            console.log('HUD.update');
             if(this.radarMap.children.length > 1){
                 this.radarMap.children = this.radarMap.children.slice(0,1);
             }
