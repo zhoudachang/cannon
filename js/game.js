@@ -95,7 +95,9 @@ function createScene() {
         nearPlane,
         farPlane
     );
-    scene.fog = new THREE.Fog(0xf7d9aa, 100, 950);
+    var fogcol = 0xcefaeb;//0x1c0403
+    scene.fog = new THREE.FogExp2( fogcol, 0.0028 );
+    // scene.fog = new THREE.Fog(0xf7d9aa, 100, 950);
     camera.position.x = 100;
     camera.position.z = 100;
     camera.position.y = 100;
@@ -105,7 +107,7 @@ function createScene() {
         antialias: true
     });
     renderer.setSize(WIDTH, HEIGHT);
-    renderer.setClearColor(0x0E2255);
+    renderer.setClearColor(0x73b2ce);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.gammaInput = true;
@@ -134,11 +136,12 @@ function handleWindowResize() {
 }
 
 function createLights() {
-    hemisphereLight = new THREE.HemisphereLight(0xaaaaaa, 0x000000, .5)
-    ambientLight = new THREE.AmbientLight(0xdc8874, .5);
-    shadowLight = new THREE.DirectionalLight(0xffffff, .9);
+    hemisphereLight = new THREE.HemisphereLight(0xaaaaaa, 0x000000, .8)
+    ambientLight = new THREE.AmbientLight(0xdc8874, .8);
+    shadowLight = new THREE.DirectionalLight(0xffffff, 1);
     shadowLight.position.set(0, 50, -50);
     shadowLight.castShadow = true;
+    // shadowLight.shadowDarkness = .5;
     shadowLight.shadow.camera.left = -game.stageWidth / 2;
     shadowLight.shadow.camera.right = game.stageWidth / 2;
     shadowLight.shadow.camera.top = game.stageHeight / 2;
@@ -149,7 +152,7 @@ function createLights() {
     shadowLight.shadow.mapSize.height = 1024;
     var ch = new THREE.CameraHelper(shadowLight.shadow.camera);
     scene.add(ch);
-    scene.add(hemisphereLight);
+    // scene.add(hemisphereLight);
     scene.add(shadowLight);
     scene.add(ambientLight);
 }
