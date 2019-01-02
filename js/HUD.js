@@ -42,6 +42,16 @@ class HUDSprites {
             this.updateRadar();
         });
         this.createRadarMap(engine);
+        this.roundMat;
+    }
+
+    initHUD(){
+        //load mats
+        this.textureLoader.load("images/",(texture) => {
+            this.roundMat = new THREE.SpriteMaterial({
+                map: texture
+            });
+        });
     }
 
     createRadarMap() {
@@ -66,6 +76,15 @@ class HUDSprites {
             });
         });
 
+    }
+
+    updateRound(roundCount){
+        if(this.roundMat){
+            let roundSprite = new THREE.Sprite(this.roundMat);
+            roundSprite.scale.set(this.roundMat.map.image.width,this.roundMat.map.image.height,1);
+            roundSprite.position.set(- WIDTH / 2 - this.roundMat.map.image.width  ,0,1);
+            TweenLite.to(roundSprite.position,2,{x:WIDTH / 2 + this.roundMat.map.image.width});
+        }
     }
 
     updateRadar() {

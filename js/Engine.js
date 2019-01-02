@@ -77,7 +77,9 @@ BehaviorTree.register('move', new BehaviorTree.Task({
                 }
                 return -1;
             });
-            console.log(distanceArray);
+            var routes = findPath(game.map, unit.index, distanceArray[0]);
+            var moveRangeRoutes = routes.find(route => moveRange.find(mr => mr[0] === route[0] && mr[1] === route[1]));
+            console.log(moveRangeRoutes);
             engine.targetIndex = moveRange[moveRange.length - 1];
             engine.driveUnit(() => {
                 unit.flag = true;
