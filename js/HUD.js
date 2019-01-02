@@ -38,16 +38,17 @@ class HUDSprites {
         //     sprite.scale.set( width, height, 1 );
         //     this.mesh.add(sprite);
         // });
-        engine.on('drive',() => {
-            this.updateRadar();
-        });
+        // engine.on('drive',() => {
+        //     this.updateRadar();
+        // });
         this.createRadarMap(engine);
         this.roundMat;
+        this.initHUD();
     }
 
-    initHUD(){
+    initHUD() {
         //load mats
-        this.textureLoader.load("images/",(texture) => {
+        this.textureLoader.load("images/round.png", (texture) => {
             this.roundMat = new THREE.SpriteMaterial({
                 map: texture
             });
@@ -78,19 +79,20 @@ class HUDSprites {
 
     }
 
-    updateRound(roundCount){
-        if(this.roundMat){
+    updateRound(roundCount) {
+        if (this.roundMat) {
             let roundSprite = new THREE.Sprite(this.roundMat);
-            roundSprite.scale.set(this.roundMat.map.image.width,this.roundMat.map.image.height,1);
-            roundSprite.position.set(- WIDTH / 2 - this.roundMat.map.image.width  ,0,1);
-            TweenLite.to(roundSprite.position,2,{x:WIDTH / 2 + this.roundMat.map.image.width});
+            roundSprite.scale.set(this.roundMat.map.image.width, this.roundMat.map.image.height, 1);
+            roundSprite.position.set(- WIDTH / 2 - this.roundMat.map.image.width, 0, 1);
+            this.mesh.add(roundSprite);
+            TweenLite.to(roundSprite.position, 5, { x: WIDTH / 2 + this.roundMat.map.image.width });
         }
     }
 
     updateRadar() {
         if (this.switch && this.ennemySprite) {
-            if(this.radarMap.children.length > 1){
-                this.radarMap.children = this.radarMap.children.slice(0,1);
+            if (this.radarMap.children.length > 1) {
+                this.radarMap.children = this.radarMap.children.slice(0, 1);
             }
             this.engine.ennemies.forEach(ennemy => {
                 var unitClone = this.ennemySprite.clone();

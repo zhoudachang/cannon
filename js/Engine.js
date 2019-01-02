@@ -118,15 +118,16 @@ class Engine {
                 ]
             })
         });
-        this.handlers = [];
+        this.hudSprites = new HUDSprites(this);
+        // this.handlers = [];
     }
 
-    on(handlerName, callback) {
-        if (!this.handlers[handlerName]) {
-            this.handlers[handlerName] = [];
-        }
-        this.handlers[handlerName].push(callback);
-    }
+    // on(handlerName, callback) {
+    //     if (!this.handlers[handlerName]) {
+    //         this.handlers[handlerName] = [];
+    //     }
+    //     this.handlers[handlerName].push(callback);
+    // }
 
     driveUnit(callback) {
         this.isWorking = true;
@@ -173,7 +174,7 @@ class Engine {
             if (callback) {
                 callback();
             }
-            this.handlers['drive'].forEach(func => func());
+            this.hudSprites.updateRadar();
         });
     }
 
@@ -342,9 +343,9 @@ class Engine {
                 game.round += 1;
                 this.units.map(i => i.flag = false);
                 this.ennemies.map(i => i.flag = false);
-                // this.current = null;
                 console.log("round = " + game.round);
                 this.state = "pending";
+                this.hudSprites.updateRound(game.round);
             } else {
                 this.btree.step();
             }

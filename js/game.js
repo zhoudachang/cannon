@@ -47,7 +47,7 @@ var raycaster = new THREE.Raycaster();
 var mouseVector = new THREE.Vector3();
 
 var scene, camera, renderer, controls;
-var hudScene, hudCamera, hudSprites;
+var hudScene, hudCamera;
 
 var engine, cannon, tank;
 var ambientLight, hemisphereLight, shadowLight;
@@ -81,8 +81,6 @@ function createHUD() {
     hudCamera = new THREE.OrthographicCamera(-WIDTH / 2, WIDTH / 2, HEIGHT / 2, -HEIGHT / 2, 1, 10);
     hudCamera.position.z = 10;
     hudScene = new THREE.Scene();
-    hudSprites = new HUDSprites(engine);
-    hudScene.add(hudSprites.mesh);
 }
 
 function createScene() {
@@ -117,7 +115,7 @@ function createScene() {
     container.appendChild(renderer.domElement);
     var controls = new THREE.OrbitControls(camera);
     scene.add(new THREE.GridHelper(100));
-    scene.add(new THREE.AxesHelper(100));
+    // scene.add(new THREE.AxesHelper(100));
     window.addEventListener('resize', handleWindowResize, false);
 }
 
@@ -629,8 +627,8 @@ function init(event) {
             placeUnit(stageData.user, engine.units);
             placeUnit(stageData.ennemies, engine.ennemies);
             createHUD();
+            hudScene.add(engine.hudSprites.mesh);
             var staff = new Stuff();
-            // staff.stone.position.set(15,0,5);
             var stone = staff.stone;
             stone.position.set(15,0,5);
             scene.add(stone);
