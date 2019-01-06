@@ -4,8 +4,9 @@
 	"height":100,
 	"block":[],
 	"user":[{"type":"tank","index":[0,0]},{"type":"cannon","index":[3,3]}],
-	"ennemies":[{"type":"tank","index":[9,0]},{"type":"cannon","index":[9,9]}],
+	"ennemies":[
+		{"type":"tank","index":[9,0]}],
 	"stuff":[
-		{"type":"tree","index":[0,1]},{"type":"tree","index":[0,2]}
+		{"type":"explosives","index":[5,8]},{"type":"tree","index":[5,7]},{"type":"tree","index":[6,6]},{"type":"stone","index":[6,7]}
 	]
 }

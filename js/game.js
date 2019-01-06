@@ -3,11 +3,16 @@ var Colors = {
     white:0xd8d0d1,
     lightgreen:0x629265,
     brown:0x59332e,
-    green:0x458248
+    green:0x458248,
+    
 }
-
+var lightGreenMat = new THREE.MeshLambertMaterial({
+    color: Colors.lightgreen,
+    flatShading: THREE.FlatShading,
+    side: THREE.DoubleSide
+});
 var whiteMat = new THREE.MeshLambertMaterial({
-    color: 0xfaf3d7,
+    color: Colors.white,
     flatShading: THREE.FlatShading
 });
 var blackMat = new THREE.MeshPhongMaterial({
@@ -24,13 +29,13 @@ var brownMat = new THREE.MeshLambertMaterial({
     side: THREE.DoubleSide
 });
 var greenMat = new THREE.MeshLambertMaterial({
-    color: 0xf0fff0,
+    color: Colors.green,
     flatShading: THREE.FlatShading,
     side: THREE.DoubleSide
 });
 var redMat = new THREE.MeshLambertMaterial({
     flatShading: THREE.FlatShading,
-    color: 0xcd3700
+    color: Colors.red
 });
 
 var particlesPool = [];
@@ -96,8 +101,8 @@ function createScene() {
     var fogcol = 0xcefaeb;//0x1c0403
     scene.fog = new THREE.FogExp2( fogcol, 0.0028 );
     // scene.fog = new THREE.Fog(0xf7d9aa, 100, 950);
-    camera.position.x = 100;
-    camera.position.z = 100;
+    camera.position.x =  150;
+    camera.position.z = 0;
     camera.position.y = 100;
     camera.lookAt(new THREE.Vector3(-50, 0, 0));
     renderer = new THREE.WebGLRenderer({
@@ -125,7 +130,6 @@ function handleWindowResize() {
     renderer.setSize(WIDTH, HEIGHT);
     camera.aspect = WIDTH / HEIGHT;
     camera.updateProjectionMatrix();
-
     hudCamera.left = - WIDTH / 2;
     hudCamera.right = WIDTH / 2;
     hudCamera.top = HEIGHT / 2;
@@ -148,8 +152,8 @@ function createLights() {
     shadowLight.shadow.camera.far = 200;
     shadowLight.shadow.mapSize.width = 1024;
     shadowLight.shadow.mapSize.height = 1024;
-    var ch = new THREE.CameraHelper(shadowLight.shadow.camera);
-    scene.add(ch);
+    // var ch = new THREE.CameraHelper(shadowLight.shadow.camera);
+    // scene.add(ch);
     // scene.add(hemisphereLight);
     scene.add(shadowLight);
     scene.add(ambientLight);
@@ -568,11 +572,9 @@ class Particle {
 
 function createGroud(w, h) {
     var groundGemo = new THREE.PlaneGeometry(w, h, w / 10, h / 10);
-    var mats = [brownMat, blackMat, greenMat, redMat];
+    var mats = [lightGreenMat, blackMat, greenMat, redMat];
     groundGemo.applyMatrix(new THREE.Matrix4().makeRotationY(-Math.PI / 2));
     groundGemo.applyMatrix(new THREE.Matrix4().makeRotationZ(-Math.PI / 2));
-    // groundGemo.faces[20].materialIndex = 2;
-    // groundGemo.faces[21].materialIndex = 2;
     var groudMesh = new THREE.Mesh(groundGemo, mats);
     groudMesh.name = 'ground';
     groudMesh.receiveShadow = true;
@@ -582,10 +584,11 @@ function createGroud(w, h) {
     scene.add(groudMesh, groundBaseMesh);
 }
 
-
+var stuff;
 function init(event) {
     document.body.appendChild(stats.dom)
     var loader = new THREE.FileLoader();
+    stuff = new Stuff();
     var placeUnit = function (unitArr, engineContainer) {
         unitArr.forEach(unit => {
             var entity;
@@ -596,13 +599,27 @@ function init(event) {
                 case "cannon":
                     entity = new Cannon();
                     break;
+                case "tree":
+                    entity = stuff.tree;
+                    break;
+                case "stone":
+                    entity = stuff.stone;
+                    break;
+                case "explosives":
+                    entity = stuff.explosives;
+                    break;
             }
 
-            entity.index = unit.index;
-            entity.mesh.position.copy(toPosition(unit.index));
-            scene.add(entity.mesh);
-            engineContainer.push(entity);
             game.map[unit.index[0]][unit.index[1]] = 1;
+            if(engineContainer){
+                engineContainer.push(entity);
+                entity.index = unit.index;
+                entity.mesh.position.copy(toPosition(unit.index));
+                scene.add(entity.mesh);
+            } else {
+                entity.position.copy(toPosition(unit.index));
+                scene.add(entity);
+            }
         });
     };
     loader.load(
@@ -622,19 +639,22 @@ function init(event) {
                 }
             }
             createScene();
+            scene.add(stuff.mesh);
             createGroud(game.stageWidth, game.stageHeight);
             createLights();
             placeUnit(stageData.user, engine.units);
             placeUnit(stageData.ennemies, engine.ennemies);
+            placeUnit(stageData.stuff);
+            // scene.add(stuff.flower);
             createHUD();
             hudScene.add(engine.hudSprites.mesh);
-            var staff = new Stuff();
-            var stone = staff.stone;
-            stone.position.set(15,0,5);
-            scene.add(stone);
-            var tree = staff.tree;
-            tree.position.set(15,0,15);
-            scene.add(tree);
+            // var staff = new Stuff();
+            // var stone = staff.stone;
+            // stone.position.set(15,0,5);
+            // scene.add(stone);
+            // var tree = staff.tree;
+            // tree.position.set(15,0,15);
+            // scene.add(tree);
             loop();
         },
         // onProgress callback
@@ -723,6 +743,7 @@ function handleMouseMove(event) {
 function loop() {
     engine.update();
     stats.update();
+    stuff.update();
     renderer.clear();
     renderer.render(scene, camera);
     renderer.clearDepth();
