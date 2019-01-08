@@ -570,18 +570,22 @@ class Particle {
     }
 }
 
-function createGroud(w, h) {
-    var groundGemo = new THREE.PlaneGeometry(w, h, w / 10, h / 10);
+function createGroud(blockw, blockh) {
+    var groundGemo = new THREE.PlaneGeometry(blockw, blockh, blockw / 10, blockh / 10);
     var mats = [lightGreenMat, blackMat, greenMat, redMat];
     groundGemo.applyMatrix(new THREE.Matrix4().makeRotationY(-Math.PI / 2));
     groundGemo.applyMatrix(new THREE.Matrix4().makeRotationZ(-Math.PI / 2));
     var groudMesh = new THREE.Mesh(groundGemo, mats);
     groudMesh.name = 'ground';
     groudMesh.receiveShadow = true;
-    var groundBaseGemo = new THREE.BoxGeometry(w, 10, h);
+    var groundBaseGemo = new THREE.BoxGeometry(blockw, 10, blockh);
     var groundBaseMesh = new THREE.Mesh(groundBaseGemo, blackMat);
     groundBaseMesh.position.y -= 5.2
-    scene.add(groudMesh, groundBaseMesh);
+    var groundBlock = new THREE.Object3D();
+    groundBlock.add(groudMesh, groundBaseMesh);
+    var groundBlockClone = groundBlock.clone();
+    groundBlockClone.position.x -= blockh;
+    scene.add(groundBlock,groundBlockClone);
 }
 
 var stuff;
