@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Cannon</title>
+    <style>
+        body {
+            /* set margin to 0 and overflow to hidden, to go fullscreen */
+            margin: 0;
+            display: block;
+            overflow: hidden;
+        }
+    </style>
+    <script src="lib/three.js"></script>
+    <script src="lib/ThreeBSP.js"></script>
+    <script src="lib/OrbitControls.js"></script>
+    <script src="lib/TweenMax.js"></script>
+    <script src="lib/dat.gui.min.js"></script>
+    <script src="lib/stats.min.js"></script>
+    <script src="js/Cannon.js"></script>
+    <script src="js/Tank.js"></script>
+    <script src="js/SmokeParticle.js"></script>
+    <script src="js/Stage.js"></script>
+    <script src="js/Lights.js"></script>
+    <script src="js/HUD.js"></script>
+</head>
+
+<body>
+    <script>
+        var hudScene, hudCamera, HEIGHT, WIDTH;
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        hudCamera = new THREE.OrthographicCamera(-window.innerWidth / 2, window.innerWidth / 2, window.innerHeight / 2,
+            -window.innerHeight / 2, 1, 10);
+        hudCamera.position.z = 10;
+        hudScene = new THREE.Scene();
+
+
+        var scene = new THREE.Scene();
+        scene.fog = new THREE.Fog(0x652e37, 350, 500);
+        var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 3000);
+        camera.position.x = 120;
+        camera.position.y = 100;
+        camera.position.z = 0;
+        camera.lookAt(new THREE.Vector3(-50, 0, 0));
+        var controls = new THREE.OrbitControls(camera);
+        scene.add(camera);
+        var renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: true
+        });
+        renderer.setClearColor(0xffffc0);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.gammaInput = true;
+        renderer.autoClear = false;
+        var stats = new Stats();
+        document.body.appendChild(stats.dom)
+        document.body.appendChild(renderer.domElement);
+        // scene.add(new THREE.GridHelper(1000,100));
+        // scene.add(new THREE.AxesHelper(1000));
+        scene.add(new Lights().lights);
+        document.addEventListener('mousedown', onDocumentMouseDown, false);
+        window.addEventListener('resize', handleWindowResize, false);
+        var hud = new HUDSprites();
+        hudScene.add(hud.mesh);
+
+        function onDocumentMouseDown(event) {}
+
+        function handleWindowResize() {
+            HEIGHT = window.innerHeight;
+            WIDTH = window.innerWidth;
+            renderer.setSize(WIDTH, HEIGHT);
+            camera.aspect = WIDTH / HEIGHT;
+            camera.updateProjectionMatrix();
+            hudCamera.left = -WIDTH / 2;
+            hudCamera.right = WIDTH / 2;
+            hudCamera.top = HEIGHT / 2;
+            hudCamera.bottom = -HEIGHT / 2;
+            hudCamera.updateProjectionMatrix();
+            hud.update();
+        }
+
+        function render() {
+            stats.update();
+            renderer.clear();
+            requestAnimationFrame(render);
+            renderer.render(scene, camera);
+            renderer.clearDepth();
+            renderer.render(hudScene, hudCamera);
+        }
+        render();
+    </script>
+</body>
+
+</html>

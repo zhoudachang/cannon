@@ -14,36 +14,53 @@ function roundRect(ctx, x, y, w, h, r) {
     ctx.stroke();
 }
 
+class BottomSprite {
+    constructor(){
+        this.mesh = new THREE.Object3D();
+        this.background;
+    }
+}
+
 class HUDSprites {
     constructor(engine) {
-        this.engine = engine;
-        this.switch = true;
-        this.mesh = new THREE.Object3D();
         this.textureLoader = new THREE.TextureLoader();
-        this.radarMap = new THREE.Object3D();
-        this.mesh.add(this.radarMap);
-        this.unitWidth = 16;
-        this.radarMargin = 2;
-        this.bgWidth = this.unitWidth * game.segmentsLength;
-        this.ennemySprite;
-        this.unitSprite;
-        // this.textureLoader.load( "/images/t1.png", (texture) => {
-        //     var material = new THREE.SpriteMaterial( { map: texture } );
-        //     var width = material.map.image.width;
-        //     var height = material.map.image.height;
-        //     var sprite = new THREE.Sprite( material );
-        //     sprite.name = "unitImage";
-        //     sprite.position.set( - WIDTH /2 + width/2 , - HEIGHT/2 + height/2, 1 );
-        //     console.log(sprite.scale);
-        //     sprite.scale.set( width, height, 1 );
-        //     this.mesh.add(sprite);
-        // });
-        // engine.on('drive',() => {
-        //     this.updateRadar();
-        // });
-        this.createRadarMap(engine);
-        this.roundMat;
-        this.initHUD();
+        this.mesh = new THREE.Object3D();
+        this.current;
+        this.bottomSprite;
+        this.initBottom();
+        if(engine){
+            this.engine = engine;
+            this.switch = true;
+            this.radarMap = new THREE.Object3D();
+            this.mesh.add(this.radarMap);
+            this.unitWidth = 16;
+            this.radarMargin = 2;
+            this.bgWidth = this.unitWidth * game.segmentsLength;
+            this.ennemySprite;
+            this.unitSprite;
+            this.createRadarMap(engine);
+            this.roundMat;
+            this.initHUD();
+        }
+    }
+
+    update(){
+        this.bottomSprite.background.position.set(0,- HEIGHT/2+ bottomHeight/2,1);
+        this.bottomSprite.background.scale.set(WIDTH, bottomHeight, 1);
+    }
+
+    initBottom(){
+        var bottomHeight = 200;
+        this.textureLoader.load("images/radar_bg.png",(texture) => {
+            var material = new THREE.SpriteMaterial({
+                map: texture
+            });
+            this.bottomSprite = new BottomSprite();
+            this.bottomSprite.background =  new THREE.Sprite(material);
+            this.bottomSprite.background.position.set(0,- HEIGHT/2+ bottomHeight/2,1);
+            this.bottomSprite.background.scale.set(WIDTH, bottomHeight, 1);
+            this.mesh.add(this.bottomSprite.mesh);
+        });
     }
 
     initHUD() {
@@ -60,8 +77,6 @@ class HUDSprites {
             var material = new THREE.SpriteMaterial({
                 map: texture
             });
-            // var width = material.map.image.width;
-            // var height = material.map.image.height;
             var bgSprite = new THREE.Sprite(material);
             bgSprite.scale.set(this.bgWidth, this.bgWidth, 1);
             bgSprite.position.set(WIDTH / 2 - this.bgWidth / 2 - this.radarMargin, HEIGHT / 2 - this.bgWidth / 2 - this.radarMargin, 1);
