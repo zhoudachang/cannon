@@ -15,9 +15,12 @@ function roundRect(ctx, x, y, w, h, r) {
 }
 
 class BottomSprite {
-    constructor(){
+    constructor() {
         this.mesh = new THREE.Object3D();
         this.background;
+        this.detailImg;
+        this.height = 200;
+        this.margin = 10;
     }
 }
 
@@ -28,7 +31,7 @@ class HUDSprites {
         this.current;
         this.bottomSprite;
         this.initBottom();
-        if(engine){
+        if (engine) {
             this.engine = engine;
             this.switch = true;
             this.radarMap = new THREE.Object3D();
@@ -44,27 +47,38 @@ class HUDSprites {
         }
     }
 
-    update(){
-        this.bottomSprite.background.position.set(0,- HEIGHT/2+ bottomHeight/2,1);
-        this.bottomSprite.background.scale.set(WIDTH, bottomHeight, 1);
+    update() {
+        this.bottomSprite.background.position.set(0, - HEIGHT / 2 + this.bottomSprite.height / 2 + this.bottomSprite.margin / 2, 1);
+        this.bottomSprite.background.scale.set(WIDTH - this.bottomSprite.margin, this.bottomSprite.height, 1);
+        if(this.current){
+
+        }
     }
 
-    initBottom(){
-        var bottomHeight = 200;
-        this.textureLoader.load("images/radar_bg.png",(texture) => {
+    initBottom() {
+        this.textureLoader.load("images/radar_bg.png", (texture) => {
             var material = new THREE.SpriteMaterial({
                 map: texture
             });
             this.bottomSprite = new BottomSprite();
-            this.bottomSprite.background =  new THREE.Sprite(material);
-            this.bottomSprite.background.position.set(0,- HEIGHT/2+ bottomHeight/2,1);
-            this.bottomSprite.background.scale.set(WIDTH, bottomHeight, 1);
+            this.bottomSprite.background = new THREE.Sprite(material);
+            this.bottomSprite.background.position.set(0, - HEIGHT / 2 + this.bottomSprite.height / 2 + this.bottomSprite.margin / 2, 1);
+            this.bottomSprite.background.scale.set(WIDTH - this.bottomSprite.margin, this.bottomSprite.height, 1);
+            this.bottomSprite.mesh.add(this.bottomSprite.background);
             this.mesh.add(this.bottomSprite.mesh);
+            this.textureLoader.load("images/radar_ennemy.png", (detailTexture) => {
+                var detailMaterial = new THREE.SpriteMaterial({
+                    map: detailTexture
+                });
+                this.bottomSprite.detailImg = new THREE.Sprite(detailMaterial);
+                this.bottomSprite.detailImg.position.set(- WIDTH / 2 + this.bottomSprite.height / 2 + this.bottomSprite.margin, - HEIGHT / 2 + this.bottomSprite.height / 2 + this.bottomSprite.margin / 2, 1.1);
+                this.bottomSprite.detailImg.scale.set(this.bottomSprite.height, this.bottomSprite.height - this.bottomSprite.margin, 1);
+                this.bottomSprite.mesh.add(this.bottomSprite.detailImg);
+            });
         });
     }
 
     initHUD() {
-        //load mats
         this.textureLoader.load("images/round.png", (texture) => {
             this.roundMat = new THREE.SpriteMaterial({
                 map: texture
