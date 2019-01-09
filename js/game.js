@@ -99,8 +99,8 @@ function createScene() {
         farPlane
     );
     var fogcol = 0xcefaeb;//0x1c0403
-    scene.fog = new THREE.FogExp2( fogcol, 0.0028 );
-    // scene.fog = new THREE.Fog(0xf7d9aa, 100, 950);
+    scene.fog = new THREE.FogExp2( fogcol, 0.006);
+    // scene.fog = new THREE.Fog(0xf7d9aa, 50,200); 
     camera.position.x =  150;
     camera.position.z = 0;
     camera.position.y = 100;
@@ -585,7 +585,9 @@ function createGroud(blockw, blockh) {
     groundBlock.add(groudMesh, groundBaseMesh);
     var groundBlockClone = groundBlock.clone();
     groundBlockClone.position.x -= blockh;
-    scene.add(groundBlock,groundBlockClone);
+    var groundBlockClone2 = groundBlockClone.clone();
+    groundBlockClone2.position.x -= blockh;
+    scene.add(groundBlock,groundBlockClone,groundBlockClone2);
 }
 
 var stuff;
