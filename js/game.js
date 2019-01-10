@@ -11,6 +11,11 @@ var lightGreenMat = new THREE.MeshLambertMaterial({
     flatShading: THREE.FlatShading,
     side: THREE.DoubleSide
 });
+var transparentMat = new THREE.MeshBasicMaterial({
+    transparent:true,
+    opacity : 0
+
+});
 var whiteMat = new THREE.MeshLambertMaterial({
     color: Colors.white,
     flatShading: THREE.FlatShading
@@ -99,11 +104,15 @@ function createScene() {
         farPlane
     );
     var fogcol = 0xcefaeb;//0x1c0403
-    scene.fog = new THREE.FogExp2( fogcol, 0.006);
-    // scene.fog = new THREE.Fog(0xf7d9aa, 50,200); 
-    camera.position.x =  150;
+    // scene.fog = new THREE.FogExp2( fogcol, 0.005);
+    scene.fog = new THREE.Fog(0xf7d9aa, 200,600); 
+    var envMap = new THREE.CubeTextureLoader()
+					.setPath( 'images/')
+					.load( [ 'px.jpg', 'nx.jpg', 'py.jpg', 'ny.jpg', 'pz.jpg', 'nz.jpg' ] );
+	scene.background = envMap;
+    camera.position.x =  200;
+    camera.position.y = 120;
     camera.position.z = 0;
-    camera.position.y = 100;
     camera.lookAt(new THREE.Vector3(-50, 0, 0));
     renderer = new THREE.WebGLRenderer({
         alpha: true,
@@ -118,8 +127,8 @@ function createScene() {
 
     container = document.body;
     container.appendChild(renderer.domElement);
-    var controls = new THREE.OrbitControls(camera);
-    scene.add(new THREE.GridHelper(100));
+    // var controls = new THREE.OrbitControls(camera);
+    // scene.add(new THREE.GridHelper(100));
     // scene.add(new THREE.AxesHelper(100));
     window.addEventListener('resize', handleWindowResize, false);
 }
@@ -572,7 +581,7 @@ class Particle {
 
 function createGroud(blockw, blockh) {
     var groundGemo = new THREE.PlaneGeometry(blockw, blockh, blockw / 10, blockh / 10);
-    var mats = [lightGreenMat, blackMat, greenMat, redMat];
+    var mats = [transparentMat, blackMat, greenMat, redMat];
     groundGemo.applyMatrix(new THREE.Matrix4().makeRotationY(-Math.PI / 2));
     groundGemo.applyMatrix(new THREE.Matrix4().makeRotationZ(-Math.PI / 2));
     var groudMesh = new THREE.Mesh(groundGemo, mats);
