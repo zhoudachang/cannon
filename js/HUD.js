@@ -19,7 +19,7 @@ class BottomSprite {
         this.mesh = new THREE.Object3D();
         this.background;
         this.detailImg;
-        this.height = 200;
+        this.height = HEIGHT/5;
         this.margin = 10;
     }
 }

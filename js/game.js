@@ -1,10 +1,10 @@
 var Colors = {
-    red:0xf25346,
-    white:0xd8d0d1,
-    lightgreen:0x629265,
-    brown:0x59332e,
-    green:0x458248,
-    
+    red: 0xf25346,
+    white: 0xd8d0d1,
+    lightgreen: 0x629265,
+    brown: 0x59332e,
+    green: 0x458248,
+
 }
 var lightGreenMat = new THREE.MeshLambertMaterial({
     color: Colors.lightgreen,
@@ -12,8 +12,8 @@ var lightGreenMat = new THREE.MeshLambertMaterial({
     side: THREE.DoubleSide
 });
 var transparentMat = new THREE.MeshBasicMaterial({
-    transparent:true,
-    opacity : 0
+    transparent: true,
+    opacity: 0
 
 });
 var whiteMat = new THREE.MeshLambertMaterial({
@@ -98,19 +98,19 @@ function createScene() {
     nearPlane = 1;
     farPlane = 10000;
     camera = new THREE.PerspectiveCamera(
-        50,
+        35,
         WIDTH / HEIGHT,
         nearPlane,
         farPlane
     );
-    var fogcol = 0xcefaeb;//0x1c0403
+    // var fogcol = 0xcefaeb; //0x1c0403;
     // scene.fog = new THREE.FogExp2( fogcol, 0.005);
-    scene.fog = new THREE.Fog(0xf7d9aa, 200,600); 
-    var envMap = new THREE.CubeTextureLoader()
-					.setPath( 'images/')
-					.load( [ 'px.jpg', 'nx.jpg', 'py.jpg', 'ny.jpg', 'pz.jpg', 'nz.jpg' ] );
-	scene.background = envMap;
-    camera.position.x =  200;
+    scene.fog = new THREE.Fog(0xf7d9aa, 50, 600);
+    // var envMap = new THREE.CubeTextureLoader()
+    // 				.setPath( 'images/')
+    // 				.load( [ 'px.jpg', 'nx.jpg', 'py.jpg', 'ny.jpg', 'pz.jpg', 'nz.jpg' ] );
+    // scene.background = envMap;
+    camera.position.x = 200;
     camera.position.y = 120;
     camera.position.z = 0;
     camera.lookAt(new THREE.Vector3(-50, 0, 0));
@@ -127,9 +127,9 @@ function createScene() {
 
     container = document.body;
     container.appendChild(renderer.domElement);
-    // var controls = new THREE.OrbitControls(camera);
+    var controls = new THREE.OrbitControls(camera);
     // scene.add(new THREE.GridHelper(100));
-    // scene.add(new THREE.AxesHelper(100));
+    scene.add(new THREE.AxesHelper(100));
     window.addEventListener('resize', handleWindowResize, false);
 }
 
@@ -139,15 +139,17 @@ function handleWindowResize() {
     renderer.setSize(WIDTH, HEIGHT);
     camera.aspect = WIDTH / HEIGHT;
     camera.updateProjectionMatrix();
-    hudCamera.left = - WIDTH / 2;
+    hudCamera.left = -WIDTH / 2;
     hudCamera.right = WIDTH / 2;
     hudCamera.top = HEIGHT / 2;
-    hudCamera.bottom = - HEIGHT / 2;
+    hudCamera.bottom = -HEIGHT / 2;
     hudCamera.updateProjectionMatrix();
 }
 
 function createLights() {
-    hemisphereLight = new THREE.HemisphereLight(0xaaaaaa, 0x000000, .8)
+    hemisphereLight = new THREE.HemisphereLight(0xaaaaaa, 0x000000, .8);
+    hemisphereLight.color.setHSL(0.6, 1, 0.6);
+    hemisphereLight.groundColor.setHSL(0.095, 1, 0.75);
     ambientLight = new THREE.AmbientLight(0xdc8874, .8);
     shadowLight = new THREE.DirectionalLight(0xffffff, 1);
     shadowLight.position.set(0, 50, -50);
@@ -168,10 +170,36 @@ function createLights() {
     scene.add(ambientLight);
 }
 
-function createSky(){
-
+function createSky() {
+    scene.background = new THREE.Color().setHSL(0.6, 0, 1);
+    var vertexShader = document.getElementById('vertexShader').textContent;
+    var fragmentShader = document.getElementById('fragmentShader').textContent;
+    var uniforms = {
+        topColor: {
+            value: new THREE.Color(0x0077ff)
+        },
+        bottomColor: {
+            value: new THREE.Color(0xffffff)
+        },
+        offset: {
+            value: 33
+        },
+        exponent: {
+            value: 0.6
+        }
+    };
+    uniforms.topColor.value.copy(hemisphereLight.color);
+    scene.fog.color.copy(uniforms.bottomColor.value);
+    var skyGeo = new THREE.SphereBufferGeometry(300, 32, 15);
+    var skyMat = new THREE.ShaderMaterial({
+        vertexShader: vertexShader,
+        fragmentShader: fragmentShader,
+        uniforms: uniforms,
+        side: THREE.BackSide
+    });
+    var sky = new THREE.Mesh(skyGeo, skyMat);
+    scene.add(sky);
 }
-
 
 class Unit {
     constructor() {
@@ -412,7 +440,7 @@ class Tank extends Unit {
             ease: Bounce.easeOut
         }).reverse(.5);
     }
-    move() { }
+    move() {}
 
 }
 
@@ -596,10 +624,22 @@ function createGroud(blockw, blockh) {
     groundBlockClone.position.x -= blockh;
     var groundBlockClone2 = groundBlockClone.clone();
     groundBlockClone2.position.x -= blockh;
-    scene.add(groundBlock,groundBlockClone,groundBlockClone2);
+    scene.add(groundBlock, groundBlockClone, groundBlockClone2);
+    var groundGeo = new THREE.PlaneBufferGeometry(1000, 1000);
+    var groundMat = new THREE.MeshPhongMaterial({
+        color: 0xffffff,
+        specular: 0x050505
+    });
+    groundMat.color.setHSL(0.095, 1, 0.75);
+    var ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -1;
+    scene.add(ground);
+
 }
 
 var stuff;
+
 function init(event) {
     document.body.appendChild(stats.dom)
     var loader = new THREE.FileLoader();
@@ -626,7 +666,7 @@ function init(event) {
             }
 
             game.map[unit.index[0]][unit.index[1]] = 1;
-            if(engineContainer){
+            if (engineContainer) {
                 engineContainer.push(entity);
                 entity.index = unit.index;
                 entity.mesh.position.copy(toPosition(unit.index));
@@ -657,6 +697,7 @@ function init(event) {
             scene.add(stuff.mesh);
             createGroud(game.stageWidth, game.stageHeight);
             createLights();
+            createSky();
             placeUnit(stageData.user, engine.units);
             placeUnit(stageData.ennemies, engine.ennemies);
             placeUnit(stageData.stuff);
