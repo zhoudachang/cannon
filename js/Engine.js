@@ -340,9 +340,9 @@ class Engine {
                 game.round += 1;
                 this.units.map(i => i.flag = false);
                 this.ennemies.map(i => i.flag = false);
-                console.log("round = " + game.round);
                 this.state = "pending";
                 this.hudSprites.updateRound(game.round);
+                console.log("round = " + game.round);
             } else {
                 this.btree.step();
             }
