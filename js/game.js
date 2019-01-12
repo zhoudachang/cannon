@@ -98,7 +98,7 @@ function createScene() {
     nearPlane = 1;
     farPlane = 10000;
     camera = new THREE.PerspectiveCamera(
-        35,
+        32,
         WIDTH / HEIGHT,
         nearPlane,
         farPlane
@@ -110,10 +110,11 @@ function createScene() {
     // 				.setPath( 'images/')
     // 				.load( [ 'px.jpg', 'nx.jpg', 'py.jpg', 'ny.jpg', 'pz.jpg', 'nz.jpg' ] );
     // scene.background = envMap;
-    camera.position.x = 200;
-    camera.position.y = 120;
-    camera.position.z = 0;
-    camera.lookAt(new THREE.Vector3(-50, 0, 0));
+    camera.position.x = 180;
+    camera.position.y = 200;
+    camera.lookAt(new THREE.Vector3(0, 0, 0));
+    // var helper = new THREE.CameraHelper( camera );
+    // scene.add( helper );
     renderer = new THREE.WebGLRenderer({
         alpha: true,
         antialias: true
@@ -124,10 +125,9 @@ function createScene() {
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.gammaInput = true;
     renderer.autoClear = false;
-
     container = document.body;
     container.appendChild(renderer.domElement);
-    var controls = new THREE.OrbitControls(camera);
+    // var controls = new THREE.OrbitControls(camera);
     // scene.add(new THREE.GridHelper(100));
     scene.add(new THREE.AxesHelper(100));
     window.addEventListener('resize', handleWindowResize, false);
@@ -608,23 +608,26 @@ class Particle {
 }
 
 function createGroud(blockw, blockh) {
-    var groundGemo = new THREE.PlaneGeometry(blockw, blockh, blockw / 10, blockh / 10);
     var mats = [transparentMat, blackMat, greenMat, redMat];
+    var groundGemo = new THREE.PlaneGeometry(blockw, blockh , blockw / 10, blockh / 10);
     groundGemo.applyMatrix(new THREE.Matrix4().makeRotationY(-Math.PI / 2));
     groundGemo.applyMatrix(new THREE.Matrix4().makeRotationZ(-Math.PI / 2));
     var groudMesh = new THREE.Mesh(groundGemo, mats);
     groudMesh.name = 'ground';
     groudMesh.receiveShadow = true;
-    var groundBaseGemo = new THREE.BoxGeometry(blockw, 10, blockh);
+    var groundBaseGemo = new THREE.BoxGeometry(blockw * 2, 10, blockh);
     var groundBaseMesh = new THREE.Mesh(groundBaseGemo, blackMat);
+    groundBaseMesh.position.x -= blockh/2
     groundBaseMesh.position.y -= 5.2
     var groundBlock = new THREE.Object3D();
     groundBlock.add(groudMesh, groundBaseMesh);
-    var groundBlockClone = groundBlock.clone();
-    groundBlockClone.position.x -= blockh;
-    var groundBlockClone2 = groundBlockClone.clone();
-    groundBlockClone2.position.x -= blockh;
-    scene.add(groundBlock, groundBlockClone, groundBlockClone2);
+    // var groundBlockClone = groundBlock.clone();
+    // groundBlockClone.position.x -= blockh;
+    // var groundBlockClone2 = groundBlockClone.clone();
+    // groundBlockClone2.position.x -= blockh;
+    scene.add(groundBlock);
+
+    //
     var groundGeo = new THREE.PlaneBufferGeometry(1000, 1000);
     var groundMat = new THREE.MeshPhongMaterial({
         color: 0xffffff,
@@ -633,7 +636,7 @@ function createGroud(blockw, blockh) {
     groundMat.color.setHSL(0.095, 1, 0.75);
     var ground = new THREE.Mesh(groundGeo, groundMat);
     ground.rotation.x = -Math.PI / 2;
-    ground.position.y = -1;
+    ground.position.y = -2;
     scene.add(ground);
 
 }
