@@ -88,16 +88,16 @@ function renderGround(range, matIndex = 0) {
 function createScene() {
     scene = new THREE.Scene();
     nearPlane = 1;
-    farPlane = 10000;
+    farPlane = 1000;
     camera = new THREE.PerspectiveCamera(
         32,
         WIDTH / HEIGHT,
         nearPlane,
         farPlane
     );
-    // var fogcol = 0xcefaeb; //0x1c0403;
-    // scene.fog = new THREE.FogExp2( fogcol, 0.005);
-    scene.fog = new THREE.Fog(0xf7d9aa, 50, 600);
+    var fogcol = 0xcefaeb; //0x1c0403;
+    scene.fog = new THREE.FogExp2( fogcol, 0.003);
+    // scene.fog = new THREE.Fog(0xf7d9aa, 50, 600);
     // var envMap = new THREE.CubeTextureLoader()
     // 				.setPath( 'images/')
     // 				.load( [ 'px.jpg', 'nx.jpg', 'py.jpg', 'ny.jpg', 'pz.jpg', 'nz.jpg' ] );
@@ -197,7 +197,7 @@ function createSky() {
 }
 
 function createGroud(blockw, blockh) {
-    var mats = [lightGreenMat, blackMat, greenMat, redMat];//transparentMat
+    var mats = [transparentMat, blackMat, greenMat, redMat];//lightGreenMat
     var groundGemo = new THREE.PlaneGeometry(blockw, blockh, blockw / 10, blockh / 10);
     groundGemo.applyMatrix(new THREE.Matrix4().makeRotationY(-Math.PI / 2));
     groundGemo.applyMatrix(new THREE.Matrix4().makeRotationZ(-Math.PI / 2));
@@ -210,13 +210,7 @@ function createGroud(blockw, blockh) {
     groundBaseMesh.position.y -= 5.2
     var groundBlock = new THREE.Object3D();
     groundBlock.add(groudMesh, groundBaseMesh);
-    // var groundBlockClone = groundBlock.clone();
-    // groundBlockClone.position.x -= blockh;
-    // var groundBlockClone2 = groundBlockClone.clone();
-    // groundBlockClone2.position.x -= blockh;
     scene.add(groundBlock);
-
-    //
     var groundGeo = new THREE.PlaneBufferGeometry(1000, 1000);
     var groundMat = new THREE.MeshPhongMaterial({
         color: 0xffffff,
@@ -225,7 +219,7 @@ function createGroud(blockw, blockh) {
     groundMat.color.setHSL(0.095, 1, 0.75);
     var ground = new THREE.Mesh(groundGeo, groundMat);
     ground.rotation.x = -Math.PI / 2;
-    ground.position.y = -2;
+    ground.position.y = -10;
     scene.add(ground);
 
 }
@@ -246,6 +240,7 @@ function init(event) {
     }
     engine = new Engine();
     stuff = new Stuff();
+    stuff.createClouds(1);
     river = new River();
     var entity = new Tank();
     entity.index = [0, 0];
@@ -254,6 +249,7 @@ function init(event) {
     createScene();
     scene.add(entity.mesh);
     scene.add(river.mesh);
+    scene.add(stuff.mesh);
     createLights();
     createSky();
     createGroud(100, 100);
