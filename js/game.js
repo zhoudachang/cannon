@@ -133,7 +133,7 @@ function handleWindowResize() {
     renderer.setSize(WIDTH, HEIGHT);
     camera.aspect = WIDTH / HEIGHT;
     camera.updateProjectionMatrix();
-    if(hudCamera){
+    if (hudCamera) {
         hudCamera.left = -WIDTH / 2;
         hudCamera.right = WIDTH / 2;
         hudCamera.top = HEIGHT / 2;
@@ -198,7 +198,7 @@ function createSky() {
 
 function createGroud(blockw, blockh) {
     var mats = [lightGreenMat, blackMat, greenMat, redMat];//transparentMat
-    var groundGemo = new THREE.PlaneGeometry(blockw, blockh , blockw / 10, blockh / 10);
+    var groundGemo = new THREE.PlaneGeometry(blockw, blockh, blockw / 10, blockh / 10);
     groundGemo.applyMatrix(new THREE.Matrix4().makeRotationY(-Math.PI / 2));
     groundGemo.applyMatrix(new THREE.Matrix4().makeRotationZ(-Math.PI / 2));
     var groudMesh = new THREE.Mesh(groundGemo, mats);
@@ -235,17 +235,26 @@ var stuff;
 function init(event) {
     document.body.appendChild(stats.dom)
     // var loader = new THREE.FileLoader();
+    game.stageWidth = 100;
+    game.stageHeight = 100;
+    game.map = [];
+    for (var x = 0; x < game.segmentsLength; x++) {
+        game.map[x] = [];
+        for (var y = 0; y < game.segmentsLength; y++) {
+            game.map[x][y] = 0;
+        }
+    }
     engine = new Engine();
     stuff = new Stuff();
     var entity = new Tank();
-    entity.index = [0,0];
+    entity.index = [0, 0];
     entity.mesh.position.copy(toPosition(entity.index));
     engine.units.push(entity);
     createScene();
     scene.add(entity.mesh);
     createLights();
     createSky();
-    createGroud(100,100);
+    createGroud(100, 100);
     loop();
     // scene.add(stuff.mesh);
     // createHUD();
@@ -343,7 +352,7 @@ function handleMouseMove(event) {
 function handleMouseUp() {
     event.preventDefault();
     var groundMesh = scene.getObjectByName('ground');
-    if(!groundMesh || !scene) {
+    if (!groundMesh || !scene) {
         return;
     }
     var intersects = raycaster.intersectObject(groundMesh, true);
