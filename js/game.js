@@ -116,7 +116,7 @@ function createScene() {
     renderer.autoClear = false;
     container = document.body;
     container.appendChild(renderer.domElement);
-    // var controls = new THREE.OrbitControls(camera);
+    var controls = new THREE.OrbitControls(camera);
     // scene.add(new THREE.GridHelper(100));
     scene.add(new THREE.AxesHelper(100));
 
@@ -231,7 +231,7 @@ function createGroud(blockw, blockh) {
 }
 
 var stuff;
-
+var river;
 function init(event) {
     document.body.appendChild(stats.dom)
     // var loader = new THREE.FileLoader();
@@ -246,12 +246,14 @@ function init(event) {
     }
     engine = new Engine();
     stuff = new Stuff();
+    river = new River();
     var entity = new Tank();
     entity.index = [0, 0];
     entity.mesh.position.copy(toPosition(entity.index));
     engine.units.push(entity);
     createScene();
     scene.add(entity.mesh);
+    scene.add(river.mesh);
     createLights();
     createSky();
     createGroud(100, 100);
@@ -388,6 +390,7 @@ function handleMouseUp() {
 
 function loop() {
     engine.update();
+    river.update();
     stats.update();
     stuff.update();
     renderer.clear();
