@@ -250,6 +250,10 @@ function init(event) {
     scene.add(entity.mesh);
     scene.add(river.mesh);
     scene.add(stuff.mesh);
+    var mountain = new Mountain();
+    var curv = mountain.one;
+    curv.position.y += 5;
+    scene.add(curv);
     createLights();
     createSky();
     createGroud(100, 100);
