@@ -28,7 +28,6 @@ class River {
             transparent: true,
             opacity: .8,
             flatShading: THREE.FlatShading,
-
         });
         var riverMesh = new THREE.Mesh(geom, mat);
         riverMesh.receiveShadow = true;

@@ -96,8 +96,8 @@ function createScene() {
         nearPlane,
         farPlane
     );
-    var fogcol = 0xcefaeb; //0x1c0403;
-    scene.fog = new THREE.FogExp2( fogcol, 0.003);
+    // var fogcol = 0xcefaeb; //0x1c0403;
+    // scene.fog = new THREE.FogExp2( fogcol, 0.003);
     // scene.fog = new THREE.Fog(0xf7d9aa, 50, 600);
     // var envMap = new THREE.CubeTextureLoader()
     // 				.setPath( 'images/')
@@ -185,7 +185,7 @@ function createSky() {
         }
     };
     uniforms.topColor.value.copy(hemisphereLight.color);
-    scene.fog.color.copy(uniforms.bottomColor.value);
+    // scene.fog.color.copy(uniforms.bottomColor.value);
     var skyGeo = new THREE.SphereBufferGeometry(300, 32, 15);
     var skyMat = new THREE.ShaderMaterial({
         vertexShader: vertexShader,
@@ -253,7 +253,7 @@ function init(event) {
     scene.add(stuff.mesh);
     var mountain = new Mountain();
     var curv = mountain.one;
-    curv.position.y += 5;
+    curv.position.set(0,-5.2,-100);
     scene.add(curv);
     createLights();
     createSky();

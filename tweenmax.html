@@ -157,28 +157,23 @@
         // attackTimeLine.call(() => console.log('finished'));
 
         //-----------------------------
-        var geom3 = new THREE.SphereGeometry(12, 32, 6);
-        var mat3 = new THREE.ShaderMaterial({
-            uniforms: {},
-            vertexShader: document.getElementById('vertexShader').textContent,
-            fragmentShader: document.getElementById('fragmentShader').textContent,
-            side: THREE.BackSide,
-            blending: THREE.AdditiveBlending,
-            transparent: true
-        });
-        var material = new THREE.MeshPhongMaterial({
-            color: 0x777777,
-            flatShading: THREE.FlatShading
-        });
-        var ball = new THREE.Mesh(geom3, mat3);
-        ball.scale.x = ball.scale.y = ball.scale.z = 1;
-        ball.position.y +=10;
-        // halo.add(ball);
-        scene.add(ball);
-        // var geometry = new THREE.Mesh(5, 1);//new THREE.TetrahedronGeometry(1, 1);
-        // var mesh = new THREE.Mesh(geometry);
-        // // var pointsUp = GeoGenTextures.buildPoints(3, Math.PI * 1.5);
-        // scene.add(mesh);
+        // var geom3 = new THREE.SphereGeometry(12, 32, 6);
+        // var mat3 = new THREE.ShaderMaterial({
+        //     uniforms: {},
+        //     vertexShader: document.getElementById('vertexShader').textContent,
+        //     fragmentShader: document.getElementById('fragmentShader').textContent,
+        //     side: THREE.BackSide,
+        //     blending: THREE.AdditiveBlending,
+        //     transparent: true
+        // });
+        // var material = new THREE.MeshPhongMaterial({
+        //     color: 0x777777,
+        //     flatShading: THREE.FlatShading
+        // });
+        // var ball = new THREE.Mesh(geom3, mat3);
+        // ball.scale.x = ball.scale.y = ball.scale.z = 1;
+        // ball.position.y +=10;
+        // scene.add(ball);
 
         var lights = [];
         lights[0] = new THREE.DirectionalLight(0xffffff, 1);
@@ -202,6 +197,12 @@
             renderer.setSize(WIDTH, HEIGHT);
             camera.aspect = WIDTH / HEIGHT;
             camera.updateProjectionMatrix();
+        }
+
+        for(var i=0;i<10;i++){
+            var particleBoxGeom = new THREE.BoxGeometry(5,5,5);
+            var particleBox = new THREE.Mesh(particleBoxGeom);
+            scene.add(particleBox);
         }
 
         render();
