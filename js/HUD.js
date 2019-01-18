@@ -111,10 +111,10 @@ class HUDSprites {
     updateRound(roundCount) {
         if (this.roundMat) {
             let roundSprite = new THREE.Sprite(this.roundMat);
-            roundSprite.scale.set(this.roundMat.map.image.width, this.roundMat.map.image.height, 1);
+            roundSprite.scale.set(this.roundMat.map.image.width * 10, this.roundMat.map.image.height * 10, 1);
             roundSprite.position.set(- WIDTH / 2 - this.roundMat.map.image.width, 0, 1);
             this.mesh.add(roundSprite);
-            TweenLite.to(roundSprite.position, 5, { x: WIDTH / 2 + this.roundMat.map.image.width });
+            TweenLite.to(roundSprite.position, 5, { x: WIDTH / 2 + this.roundMat.map.image.width * 10 });
         }
     }
 
