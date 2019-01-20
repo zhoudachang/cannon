@@ -19,7 +19,8 @@ class BottomSprite {
         this.mesh = new THREE.Object3D();
         this.background;
         this.detailImg;
-        this.height = HEIGHT/5;
+        this.hp;
+        this.height = HEIGHT / 5;
         this.margin = 10;
     }
 }
@@ -50,7 +51,7 @@ class HUDSprites {
     update() {
         this.bottomSprite.background.position.set(0, - HEIGHT / 2 + this.bottomSprite.height / 2 + this.bottomSprite.margin / 2, 1);
         this.bottomSprite.background.scale.set(WIDTH - this.bottomSprite.margin, this.bottomSprite.height, 1);
-        if(this.current){
+        if (this.current) {
 
         }
     }
@@ -58,7 +59,9 @@ class HUDSprites {
     initBottom() {
         this.textureLoader.load("images/radar_bg.png", (texture) => {
             var material = new THREE.SpriteMaterial({
-                map: texture
+                map: texture,
+                transparent: true,
+                opacity: 0.3
             });
             this.bottomSprite = new BottomSprite();
             this.bottomSprite.background = new THREE.Sprite(material);
@@ -66,14 +69,67 @@ class HUDSprites {
             this.bottomSprite.background.scale.set(WIDTH - this.bottomSprite.margin, this.bottomSprite.height, 1);
             this.bottomSprite.mesh.add(this.bottomSprite.background);
             this.mesh.add(this.bottomSprite.mesh);
-            this.textureLoader.load("images/radar_ennemy.png", (detailTexture) => {
-                var detailMaterial = new THREE.SpriteMaterial({
-                    map: detailTexture
+            // this.textureLoader.load("images/radar_unit.png", (detailTexture) => {
+            //     var detailMaterial = new THREE.SpriteMaterial({
+            //         map: detailTexture
+            //     });
+            //     this.bottomSprite.detailImg = new THREE.Sprite(detailMaterial);
+            //     this.bottomSprite.detailImg.position.set(- WIDTH / 2 + this.bottomSprite.height / 2 + this.bottomSprite.margin, 
+            //         - HEIGHT / 2 + this.bottomSprite.height / 2 + this.bottomSprite.margin / 2, 1.1);
+            //     this.bottomSprite.detailImg.scale.set(this.bottomSprite.height, this.bottomSprite.height - this.bottomSprite.margin, 1);
+            //     this.bottomSprite.mesh.add(this.bottomSprite.detailImg);
+            // });
+
+            this.textureLoader.load("images/button_hp.png", (hpbuttonTexture) => {
+                var hpSpriteMat = new THREE.SpriteMaterial({
+                    map: hpbuttonTexture
                 });
-                this.bottomSprite.detailImg = new THREE.Sprite(detailMaterial);
-                this.bottomSprite.detailImg.position.set(- WIDTH / 2 + this.bottomSprite.height / 2 + this.bottomSprite.margin, - HEIGHT / 2 + this.bottomSprite.height / 2 + this.bottomSprite.margin / 2, 1.1);
-                this.bottomSprite.detailImg.scale.set(this.bottomSprite.height, this.bottomSprite.height - this.bottomSprite.margin, 1);
-                this.bottomSprite.mesh.add(this.bottomSprite.detailImg);
+                var hpWidth = hpSpriteMat.map.image.width;
+                var hpHeight = hpSpriteMat.map.image.height;
+                this.bottomSprite.hp = new THREE.Sprite(hpSpriteMat);
+                this.bottomSprite.hp.scale.set(hpWidth, hpHeight, 1);
+                this.bottomSprite.hp.position.set(- WIDTH / 2 + hpWidth / 2 + this.bottomSprite.margin * 2 + this.bottomSprite.height, 
+                    - HEIGHT / 2 + this.bottomSprite.height - hpHeight / 2, 1.1);
+                this.bottomSprite.mesh.add(this.bottomSprite.hp);
+            });
+
+            this.textureLoader.load("images/button_mov.png", (hpbuttonTexture) => {
+                var hpSpriteMat = new THREE.SpriteMaterial({
+                    map: hpbuttonTexture
+                });
+                var hpWidth = hpSpriteMat.map.image.width;
+                var hpHeight = hpSpriteMat.map.image.height;
+                this.bottomSprite.hp = new THREE.Sprite(hpSpriteMat);
+                this.bottomSprite.hp.scale.set(hpWidth, hpHeight, 1);
+                this.bottomSprite.hp.position.set(- WIDTH / 2 + hpWidth / 2 + this.bottomSprite.margin * 2 + this.bottomSprite.height, 
+                    - HEIGHT / 2 + this.bottomSprite.height - hpHeight / 2 - this.bottomSprite.margin - 32, 1.1);
+                this.bottomSprite.mesh.add(this.bottomSprite.hp);
+            });
+
+            this.textureLoader.load("images/button_att.png", (hpbuttonTexture) => {
+                var hpSpriteMat = new THREE.SpriteMaterial({
+                    map: hpbuttonTexture
+                });
+                var hpWidth = hpSpriteMat.map.image.width;
+                var hpHeight = hpSpriteMat.map.image.height;
+                this.bottomSprite.hp = new THREE.Sprite(hpSpriteMat);
+                this.bottomSprite.hp.scale.set(hpWidth, hpHeight, 1);
+                this.bottomSprite.hp.position.set(- WIDTH / 2 + hpWidth / 2 + this.bottomSprite.margin * 2 + this.bottomSprite.height, 
+                    - HEIGHT / 2 + this.bottomSprite.height - hpHeight / 2 - this.bottomSprite.margin * 2 - 64, 1.1);
+                this.bottomSprite.mesh.add(this.bottomSprite.hp);
+            });
+
+            this.textureLoader.load("images/button_lv.png", (hpbuttonTexture) => {
+                var hpSpriteMat = new THREE.SpriteMaterial({
+                    map: hpbuttonTexture
+                });
+                var hpWidth = hpSpriteMat.map.image.width;
+                var hpHeight = hpSpriteMat.map.image.height;
+                this.bottomSprite.hp = new THREE.Sprite(hpSpriteMat);
+                this.bottomSprite.hp.scale.set(hpWidth, hpHeight, 1);
+                this.bottomSprite.hp.position.set(- WIDTH / 2 + hpWidth / 2 + this.bottomSprite.margin * 2 + this.bottomSprite.height, 
+                    - HEIGHT / 2 + this.bottomSprite.height - hpHeight / 2 - this.bottomSprite.margin * 3 - 96, 1.1);
+                this.bottomSprite.mesh.add(this.bottomSprite.hp);
             });
         });
     }
@@ -89,15 +145,18 @@ class HUDSprites {
     createRadarMap() {
         this.textureLoader.load("images/radar_bg.png", (texture) => {
             var material = new THREE.SpriteMaterial({
-                map: texture
+                map: texture,
+                transparent: true,
+                opacity: 0.3
             });
             var bgSprite = new THREE.Sprite(material);
             bgSprite.scale.set(this.bgWidth, this.bgWidth, 1);
             bgSprite.position.set(WIDTH / 2 - this.bgWidth / 2 - this.radarMargin, HEIGHT / 2 - this.bgWidth / 2 - this.radarMargin, 1);
             this.radarMap.add(bgSprite);
-            this.textureLoader.load("images/radar_ennemy.png", (texture) => {
+            this.textureLoader.load("images/radar_unit.png", (texture) => {
                 var material = new THREE.SpriteMaterial({
-                    map: texture
+                    map: texture,
+
                 });
                 var width = material.map.image.width;
                 this.unitWidth = width;

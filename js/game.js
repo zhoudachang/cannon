@@ -97,15 +97,16 @@ function createScene() {
         farPlane
     );
     // var fogcol = 0xcefaeb; //0x1c0403;
-    // scene.fog = new THREE.FogExp2( fogcol, 0.003);
-    // scene.fog = new THREE.Fog(0xf7d9aa, 50, 600);
+    // scene.fog = new THREE.FogExp2( fogcol, 0.0025);
+    scene.fog = new THREE.Fog(0x000000, 200, 500);
     // var envMap = new THREE.CubeTextureLoader()
     // 				.setPath( 'images/')
     // 				.load( [ 'px.jpg', 'nx.jpg', 'py.jpg', 'ny.jpg', 'pz.jpg', 'nz.jpg' ] );
     // scene.background = envMap;
-    camera.position.x = 280;
+    camera.position.x = 180;
     camera.position.y = 150;
-    camera.lookAt(new THREE.Vector3(-50, 0, 0));
+    camera.position.z = 180;
+    camera.lookAt(new THREE.Vector3(0, 0, 0));
     renderer = new THREE.WebGLRenderer({
         alpha: true,
         antialias: true
@@ -117,9 +118,9 @@ function createScene() {
     renderer.autoClear = false;
     container = document.body;
     container.appendChild(renderer.domElement);
-    var controls = new THREE.OrbitControls(camera);
+    // var controls = new THREE.OrbitControls(camera);
     // scene.add(new THREE.GridHelper(100));
-    scene.add(new THREE.AxesHelper(100));
+    // scene.add(new THREE.AxesHelper(100));
 
     hudCamera = new THREE.OrthographicCamera(-WIDTH / 2, WIDTH / 2, HEIGHT / 2, -HEIGHT / 2, 1, 10);
     hudCamera.position.z = 10;
@@ -185,7 +186,7 @@ function createSky() {
         }
     };
     uniforms.topColor.value.copy(hemisphereLight.color);
-    // scene.fog.color.copy(uniforms.bottomColor.value);
+    scene.fog.color.copy(uniforms.bottomColor.value);
     var skyGeo = new THREE.SphereBufferGeometry(300, 32, 15);
     var skyMat = new THREE.ShaderMaterial({
         vertexShader: vertexShader,

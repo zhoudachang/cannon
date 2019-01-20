@@ -48,8 +48,6 @@ class Mountain {
         for(var i=0;i<5;i++){
             var layerclone = layer.clone();
             layerclone.scale.z = 0.9 - i*0.1;
-            // layerclone.scale.x = 0.9 -i*0.1 ;
-            // layerclone.scale.set(0,0,0.8-i*0.1);
             layerclone.position.y += 5*(i+1);
             result.add(layerclone);
         }
