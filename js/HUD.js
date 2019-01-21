@@ -19,9 +19,11 @@ class BottomSprite {
         this.mesh = new THREE.Object3D();
         this.background;
         this.detailImg;
-        this.hp;
+        // this.hp;
         this.height = HEIGHT / 5;
         this.margin = 10;
+        this.resourcePath = "images/";
+        this.lines = ['button_hp.png','button_mov.png','button_att.png','button_lv.png'];
     }
 }
 
@@ -31,6 +33,7 @@ class HUDSprites {
         this.mesh = new THREE.Object3D();
         this.current;
         this.bottomSprite;
+        this.resourcePath = "images/";
         this.initBottom();
         if (engine) {
             this.engine = engine;
@@ -57,7 +60,7 @@ class HUDSprites {
     }
 
     initBottom() {
-        this.textureLoader.load("images/radar_bg.png", (texture) => {
+        this.textureLoader.load(this.resourcePath+ "radar_bg.png", (texture) => {
             var material = new THREE.SpriteMaterial({
                 map: texture,
                 transparent: true,
@@ -79,57 +82,22 @@ class HUDSprites {
             //     this.bottomSprite.detailImg.scale.set(this.bottomSprite.height, this.bottomSprite.height - this.bottomSprite.margin, 1);
             //     this.bottomSprite.mesh.add(this.bottomSprite.detailImg);
             // });
-
-            this.textureLoader.load("images/button_hp.png", (hpbuttonTexture) => {
-                var hpSpriteMat = new THREE.SpriteMaterial({
-                    map: hpbuttonTexture
+            let lineCount = 0;
+            let hpHeight = this.bottomSprite.height/this.bottomSprite.lines.length - this.bottomSprite.margin/2;
+            this.bottomSprite.lines.forEach((item) => {
+                this.textureLoader.load(this.bottomSprite.resourcePath + item, (texture) => {
+                    let hpSpriteMat = new THREE.SpriteMaterial({
+                        map: texture
+                    });
+                    let spriteWidth = hpSpriteMat.map.image.width;//default width
+                    let lineSprite = new THREE.Sprite(hpSpriteMat);
+                    lineSprite.scale.set(spriteWidth, hpHeight, 1);
+                    let posx = - WIDTH / 2 + spriteWidth / 2 + this.bottomSprite.margin * 2 + this.bottomSprite.height;
+                    let posy = - HEIGHT / 2 + this.bottomSprite.height - hpHeight/2 - (hpHeight+this.bottomSprite.margin/2)*lineCount;// - hpHeight/2 - hpHeight*lineCount -  this.bottomSprite.margin;
+                    lineSprite.position.set(posx, posy , 1.1);
+                    this.bottomSprite.mesh.add(lineSprite);
+                    lineCount ++;
                 });
-                var hpWidth = hpSpriteMat.map.image.width;
-                var hpHeight = hpSpriteMat.map.image.height;
-                this.bottomSprite.hp = new THREE.Sprite(hpSpriteMat);
-                this.bottomSprite.hp.scale.set(hpWidth, hpHeight, 1);
-                this.bottomSprite.hp.position.set(- WIDTH / 2 + hpWidth / 2 + this.bottomSprite.margin * 2 + this.bottomSprite.height, 
-                    - HEIGHT / 2 + this.bottomSprite.height - hpHeight / 2, 1.1);
-                this.bottomSprite.mesh.add(this.bottomSprite.hp);
-            });
-
-            this.textureLoader.load("images/button_mov.png", (hpbuttonTexture) => {
-                var hpSpriteMat = new THREE.SpriteMaterial({
-                    map: hpbuttonTexture
-                });
-                var hpWidth = hpSpriteMat.map.image.width;
-                var hpHeight = hpSpriteMat.map.image.height;
-                this.bottomSprite.hp = new THREE.Sprite(hpSpriteMat);
-                this.bottomSprite.hp.scale.set(hpWidth, hpHeight, 1);
-                this.bottomSprite.hp.position.set(- WIDTH / 2 + hpWidth / 2 + this.bottomSprite.margin * 2 + this.bottomSprite.height, 
-                    - HEIGHT / 2 + this.bottomSprite.height - hpHeight / 2 - this.bottomSprite.margin - 32, 1.1);
-                this.bottomSprite.mesh.add(this.bottomSprite.hp);
-            });
-
-            this.textureLoader.load("images/button_att.png", (hpbuttonTexture) => {
-                var hpSpriteMat = new THREE.SpriteMaterial({
-                    map: hpbuttonTexture
-                });
-                var hpWidth = hpSpriteMat.map.image.width;
-                var hpHeight = hpSpriteMat.map.image.height;
-                this.bottomSprite.hp = new THREE.Sprite(hpSpriteMat);
-                this.bottomSprite.hp.scale.set(hpWidth, hpHeight, 1);
-                this.bottomSprite.hp.position.set(- WIDTH / 2 + hpWidth / 2 + this.bottomSprite.margin * 2 + this.bottomSprite.height, 
-                    - HEIGHT / 2 + this.bottomSprite.height - hpHeight / 2 - this.bottomSprite.margin * 2 - 64, 1.1);
-                this.bottomSprite.mesh.add(this.bottomSprite.hp);
-            });
-
-            this.textureLoader.load("images/button_lv.png", (hpbuttonTexture) => {
-                var hpSpriteMat = new THREE.SpriteMaterial({
-                    map: hpbuttonTexture
-                });
-                var hpWidth = hpSpriteMat.map.image.width;
-                var hpHeight = hpSpriteMat.map.image.height;
-                this.bottomSprite.hp = new THREE.Sprite(hpSpriteMat);
-                this.bottomSprite.hp.scale.set(hpWidth, hpHeight, 1);
-                this.bottomSprite.hp.position.set(- WIDTH / 2 + hpWidth / 2 + this.bottomSprite.margin * 2 + this.bottomSprite.height, 
-                    - HEIGHT / 2 + this.bottomSprite.height - hpHeight / 2 - this.bottomSprite.margin * 3 - 96, 1.1);
-                this.bottomSprite.mesh.add(this.bottomSprite.hp);
             });
         });
     }

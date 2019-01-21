@@ -126,6 +126,13 @@ function createScene() {
     hudCamera.position.z = 10;
     hudScene = new THREE.Scene();
     hudScene.add(engine.hudSprites.mesh);
+    engine.stuff.forEach((stf) => {
+        scene.add(stf);
+    });
+    engine.units.forEach((unit) => {
+        scene.add(unit.mesh);
+    });
+
     window.addEventListener('resize', handleWindowResize, false);
 }
 
@@ -242,14 +249,10 @@ function init(event) {
     }
     engine = new Engine();
     stuff = new Stuff();
+    stuff.refreshStuff(engine);
+    createScene();
     stuff.createClouds(1);
     river = new River();
-    var entity = new Tank();
-    entity.index = [0, 0];
-    entity.mesh.position.copy(toPosition(entity.index));
-    engine.units.push(entity);
-    createScene();
-    scene.add(entity.mesh);
     scene.add(river.mesh);
     scene.add(stuff.mesh);
     var mountain = new Mountain();

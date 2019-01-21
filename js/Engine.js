@@ -107,6 +107,7 @@ class Engine {
         this.mode = 0;
         this.ennemies = [];
         this.units = [];
+        this.stuff = [];
         this.current;
         this.target;
         this.targetIndex;
