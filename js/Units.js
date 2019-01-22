@@ -78,7 +78,6 @@ class Cannon extends Unit {
 
 class Copter {
     constructor(){
-        // super();
         this.mesh = new THREE.Object3D();
         this.shape();
     }
@@ -86,10 +85,10 @@ class Copter {
     shape(){
         var cabinGeom = new THREE.BoxGeometry(10,10,18);
         var cabinMesh = new THREE.Mesh(cabinGeom);
-        cabinMesh.position.set(0,5,0);
+        cabinMesh.position.set(0,10,0);
         var cabinWinGeom = new THREE.BoxGeometry(10.2,6,8);
         var cabinWinMesh = new THREE.Mesh(cabinWinGeom,glassMat);
-        cabinWinMesh.position.set(0,7,5);
+        cabinWinMesh.position.set(0,12,5);
         var cabinBsp = new ThreeBSP(cabinMesh);
 		var winBsp = new ThreeBSP(cabinWinMesh);
         var result = cabinBsp.subtract(winBsp);
@@ -100,20 +99,70 @@ class Copter {
         this.mesh.add(cabinWinMesh);
         this.mesh.add(cabinmesh);
 
+        var tubeGroup = new THREE.Object3D();
         var baseTubeGeom = new THREE.CylinderGeometry(.8,.8,5);
         var tubeMesh = new THREE.Mesh(baseTubeGeom,blackMat);
         var tubeMeshClone = tubeMesh.clone();
         tubeMesh.position.x += 5;
-        tubeMesh.position.y -= 2;
+        tubeMesh.position.y += 3;
         tubeMesh.position.z += 4;
         tubeMesh.rotation.z += Math.PI/8;
-
         tubeMeshClone.position.x += 5;
-        tubeMeshClone.position.y -= 2;
+        tubeMeshClone.position.y += 3;
         tubeMeshClone.position.z -= 4;
         tubeMeshClone.rotation.z += Math.PI/8;
+        var tubeBottomGeom = new THREE.CylinderGeometry(.8,.8,15);
+        tubeBottomGeom.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2))
+        var tubeBottomMesh = new THREE.Mesh(tubeBottomGeom,blackMat);
+        tubeBottomMesh.position.x += 6.2;
+        tubeGroup.add(tubeMesh,tubeMeshClone,tubeBottomMesh);
+        var tubeGroupOtheside = tubeGroup.clone();
+        tubeGroupOtheside.rotation.y += Math.PI;
+        this.mesh.add(tubeGroup,tubeGroupOtheside);
 
-        this.mesh.add(tubeMesh,tubeMeshClone);
+        var ridgeGeom = new THREE.BoxGeometry(7,7,8);
+        var ridgeMesh = new THREE.Mesh(ridgeGeom,redMat);
+        ridgeMesh.position.set(0,12,-8);
+        this.mesh.add(ridgeMesh);
+
+        var ridgeGeom2 = new THREE.BoxGeometry(7,7,15);
+        var ridgeMesh2 = new THREE.Mesh(ridgeGeom2,redMat);
+        ridgeMesh2.position.set(0,12,-19);  
+        this.mesh.add(ridgeMesh2);
+        
+        var propellerGroup = new THREE.Object3D();
+        var axelGeom = new THREE.CylinderGeometry(1,1,5);
+        var axelMesh = new THREE.Mesh(axelGeom,blackMat);
+        axelMesh.position.y += 16;
+        var axelTopGeom = new THREE.CylinderGeometry(2,2,2);
+        var axelTopMesh = new THREE.Mesh(axelTopGeom,blackMat);
+        axelTopMesh.position.y += 19;
+        propellerGroup.add(axelMesh,axelTopMesh);
+        propellerGroup.name = 'propeller';
+
+        var propellerGeom = new THREE.BoxGeometry(40,1,5);
+        var propellerMesh = new THREE.Mesh(propellerGeom,blackMat);
+        propellerMesh.position.y += 18;
+        var propellerGeom2 = new THREE.BoxGeometry(5,1,40);
+        var propellerMesh2 = new THREE.Mesh(propellerGeom2,blackMat);
+        propellerMesh2.position.y += 18;
+        propellerGroup.add(propellerMesh,propellerMesh2);
+        propellerGroup.rotation.y += Math.PI/4;
+        this.mesh.add(propellerGroup);
+
+
+        var wingGemo = new THREE.BoxGeometry(26,1,8);
+        var wingMesh = new THREE.Mesh(wingGemo,redMat);
+        wingMesh.position.y += 10;
+        wingMesh.position.z -= 8
+        this.mesh.add(wingMesh);
+
+
+    }
+
+    update(){
+       var propeller = this.mesh.getObjectByName('propeller');
+       propeller.rotation.y += 0.1;
     }
 }
 

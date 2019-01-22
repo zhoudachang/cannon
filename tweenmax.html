@@ -188,6 +188,7 @@
         scene.add(lights[2]);
 
         function render() {
+            copter.update();
             requestAnimationFrame(render);
             renderer.render(scene, camera);
         }
@@ -225,7 +226,7 @@
             color: 0xd3d3d3,
             flatShading: THREE.FlatShading,
             transparent: true,
-            opacity: 0.6
+            opacity: 0.8
         });
         var copter = new Copter();
         scene.add(copter.mesh);
