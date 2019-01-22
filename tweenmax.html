@@ -14,6 +14,8 @@
     <script src="lib/three.js"></script>
     <script src="lib/OrbitControls.js"></script>
     <script src="lib/TweenMax.js"></script>
+    <script src="js/Units.js"></script>
+    <script src="lib/ThreeBSP.js"></script>
 </head>
 <script id="vertexShader" type="x-shader/x-vertex">
     varying vec3 vNormal; void main() { vNormal = normalize( normalMatrix * normal ); gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }
@@ -25,7 +27,6 @@
 <body>
     <script>
         var scene, camera, renderer, controls;
-        var engine, cannon, tank;
         var ambientLight, hemisphereLight, shadowLight;
         var HEIGHT, WIDTH, mousePos = {
             x: 0,
@@ -60,7 +61,7 @@
         container.appendChild(renderer.domElement);
         scene.add(new THREE.GridHelper(100));
         scene.add(new THREE.AxesHelper(100));
-        // createLights();
+        createLights();
         window.addEventListener('resize', handleWindowResize, false);
 
         //----------------
@@ -199,11 +200,35 @@
             camera.updateProjectionMatrix();
         }
 
-        for(var i=0;i<10;i++){
-            var particleBoxGeom = new THREE.BoxGeometry(5,5,5);
-            var particleBox = new THREE.Mesh(particleBoxGeom);
-            scene.add(particleBox);
+        // for(var i=0;i<10;i++){
+        //     var particleBoxGeom = new THREE.BoxGeometry(5,5,5);
+        //     var particleBox = new THREE.Mesh(particleBoxGeom);
+        //     scene.add(particleBox);
+        // }
+        var Colors = {
+            red: 0xf25346,
+            white: 0xd8d0d1,
+            lightgreen: 0x629265,
+            brown: 0x59332e,
+            green: 0x458248,
+            yellow: 0xfdd276
         }
+        var redMat = new THREE.MeshPhongMaterial({
+            flatShading: THREE.FlatShading,
+            color: Colors.red
+        });
+        var blackMat = new THREE.MeshPhongMaterial({
+            color: 0x403133,
+            flatShading: THREE.FlatShading
+        });
+        var glassMat = new THREE.MeshLambertMaterial({
+            color: 0xd3d3d3,
+            flatShading: THREE.FlatShading,
+            transparent: true,
+            opacity: 0.6
+        });
+        var copter = new Copter();
+        scene.add(copter.mesh);
 
         render();
 

@@ -5,7 +5,6 @@ var Colors = {
     brown: 0x59332e,
     green: 0x458248,
     yellow: 0xfdd276
-
 }
 var lightGreenMat = new THREE.MeshLambertMaterial({
     color: Colors.lightgreen,

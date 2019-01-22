@@ -76,6 +76,47 @@ class Cannon extends Unit {
     }
 }
 
+class Copter {
+    constructor(){
+        // super();
+        this.mesh = new THREE.Object3D();
+        this.shape();
+    }
+
+    shape(){
+        var cabinGeom = new THREE.BoxGeometry(10,10,18);
+        var cabinMesh = new THREE.Mesh(cabinGeom);
+        cabinMesh.position.set(0,5,0);
+        var cabinWinGeom = new THREE.BoxGeometry(10.2,6,8);
+        var cabinWinMesh = new THREE.Mesh(cabinWinGeom,glassMat);
+        cabinWinMesh.position.set(0,7,5);
+        var cabinBsp = new ThreeBSP(cabinMesh);
+		var winBsp = new ThreeBSP(cabinWinMesh);
+        var result = cabinBsp.subtract(winBsp);
+        var cabinmesh = result.toMesh();
+        cabinmesh.material = redMat;
+        cabinWinMesh.scale.z = 0.8;
+        cabinWinMesh.position.z -= 1
+        this.mesh.add(cabinWinMesh);
+        this.mesh.add(cabinmesh);
+
+        var baseTubeGeom = new THREE.CylinderGeometry(.8,.8,5);
+        var tubeMesh = new THREE.Mesh(baseTubeGeom,blackMat);
+        var tubeMeshClone = tubeMesh.clone();
+        tubeMesh.position.x += 5;
+        tubeMesh.position.y -= 2;
+        tubeMesh.position.z += 4;
+        tubeMesh.rotation.z += Math.PI/8;
+
+        tubeMeshClone.position.x += 5;
+        tubeMeshClone.position.y -= 2;
+        tubeMeshClone.position.z -= 4;
+        tubeMeshClone.rotation.z += Math.PI/8;
+
+        this.mesh.add(tubeMesh,tubeMeshClone);
+    }
+}
+
 class Tank extends Unit {
     constructor() {
         super();
@@ -155,26 +196,6 @@ class Tank extends Unit {
         this.mesh.add(backWheelMesh, backLeftWheelMesh);
         this.wheels.push(backWheelMesh);
         this.wheels.push(backLeftWheelMesh);
-
-        // var canvas = document.createElement('canvas');
-        // canvas.width = 128;
-        // canvas.height = 32;
-        // var ctx = canvas.getContext('2d');
-        // ctx.lineJoin = "round";
-        // ctx.fillStyle = '#F0FFF0';
-        // ctx.fillRect(0, 0, 128, 4);
-        // ctx.fillStyle = '#228B22';
-        // ctx.fillRect(2, 1, 64, 2);
-        // var texture = new THREE.Texture(canvas);
-        // texture.needsUpdate = true;
-        // var spriteMaterial = new THREE.SpriteMaterial({
-        //     map: texture,
-        //     transparent: true
-        // });
-        // var sprite = new THREE.Sprite(spriteMaterial);
-        // sprite.position.set(0, 8, 0);
-        // sprite.scale.set(30, 30, 30);
-        // this.mesh.add(sprite);
 
         this.mesh.traverse(function (object) {
             if (object instanceof THREE.Mesh) {
