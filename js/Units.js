@@ -123,12 +123,20 @@ class Copter {
         var ridgeGeom = new THREE.BoxGeometry(7,7,8);
         var ridgeMesh = new THREE.Mesh(ridgeGeom,redMat);
         ridgeMesh.position.set(0,12,-8);
-        this.mesh.add(ridgeMesh);
 
         var ridgeGeom2 = new THREE.BoxGeometry(7,7,15);
+        ridgeGeom2.vertices[3].y += 5;
+        ridgeGeom2.vertices[6].y += 5;
+        ridgeGeom2.vertices[1].x -=3;
+        ridgeGeom2.vertices[3].x -=3;
+        ridgeGeom2.vertices[4].x +=3;
+        ridgeGeom2.vertices[6].x +=3;
         var ridgeMesh2 = new THREE.Mesh(ridgeGeom2,redMat);
         ridgeMesh2.position.set(0,12,-19);  
-        this.mesh.add(ridgeMesh2);
+        var ridgeGeom3 = new THREE.BoxGeometry(1,2,5);
+        var ridgeMesh3 = new THREE.Mesh(ridgeGeom3,redMat);
+        ridgeMesh3.position.set(0,14.5,-28.5);
+        this.mesh.add(ridgeMesh,ridgeMesh2,ridgeMesh3);
         
         var propellerGroup = new THREE.Object3D();
         var axelGeom = new THREE.CylinderGeometry(1,1,5);
@@ -161,8 +169,8 @@ class Copter {
     }
 
     update(){
-       var propeller = this.mesh.getObjectByName('propeller');
-       propeller.rotation.y += 0.1;
+    //    var propeller = this.mesh.getObjectByName('propeller');
+    //    propeller.rotation.y += 0.1;
     }
 }
 
