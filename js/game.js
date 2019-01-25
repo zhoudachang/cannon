@@ -42,7 +42,12 @@ var redMat = new THREE.MeshLambertMaterial({
     flatShading: THREE.FlatShading,
     color: Colors.red
 });
-
+var glassMat = new THREE.MeshLambertMaterial({
+    color: 0xd3d3d3,
+    flatShading: THREE.FlatShading,
+    transparent: true,
+    opacity: 0.8
+});
 var game = {
     round: 1,
     stageWidth: 100,
@@ -97,7 +102,7 @@ function createScene() {
     );
     // var fogcol = 0xcefaeb; //0x1c0403;
     // scene.fog = new THREE.FogExp2( fogcol, 0.0025);
-    scene.fog = new THREE.Fog(0x000000, 200, 500);
+    scene.fog = new THREE.Fog(0x000000, 100, 500);
     // var envMap = new THREE.CubeTextureLoader()
     // 				.setPath( 'images/')
     // 				.load( [ 'px.jpg', 'nx.jpg', 'py.jpg', 'ny.jpg', 'pz.jpg', 'nz.jpg' ] );
@@ -119,7 +124,7 @@ function createScene() {
     container.appendChild(renderer.domElement);
     // var controls = new THREE.OrbitControls(camera);
     // scene.add(new THREE.GridHelper(100));
-    // scene.add(new THREE.AxesHelper(100));
+    scene.add(new THREE.AxesHelper(100));
 
     hudCamera = new THREE.OrthographicCamera(-WIDTH / 2, WIDTH / 2, HEIGHT / 2, -HEIGHT / 2, 1, 10);
     hudCamera.position.z = 10;
@@ -258,6 +263,9 @@ function init(event) {
     var curv = mountain.one;
     curv.position.set(0,-5.2,-100);
     scene.add(curv);
+    var copter = new Copter();
+    copter.mesh.position.set(-30,30,-90)
+    scene.add(copter.mesh);
     createLights();
     createSky();
     createGroud(100, 100);

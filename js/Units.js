@@ -94,10 +94,12 @@ class Copter {
         var result = cabinBsp.subtract(winBsp);
         var cabinmesh = result.toMesh();
         cabinmesh.material = redMat;
-        cabinWinMesh.scale.z = 0.8;
-        cabinWinMesh.position.z -= 1
-        this.mesh.add(cabinWinMesh);
+        // cabinWinMesh.scale.z = 0.8;
+        // cabinWinMesh.position.z -= 1
         this.mesh.add(cabinmesh);
+        cabinWinGeom.vertices[5].y -= 2;
+        cabinWinGeom.vertices[0].y -= 2;
+        this.mesh.add(cabinWinMesh);
 
         var tubeGroup = new THREE.Object3D();
         var baseTubeGeom = new THREE.CylinderGeometry(.8,.8,5);
@@ -133,14 +135,10 @@ class Copter {
         ridgeGeom2.vertices[6].x +=2;
         var ridgeMesh2 = new THREE.Mesh(ridgeGeom2,redMat);
         ridgeMesh2.position.set(0,12,-19);  
-        // var ridgeGeom3 = new THREE.BoxGeometry(1,4,5);
-        // ridgeGeom3.vertices[1].y += 5;
-        // ridgeGeom3.vertices[3].y += 5;
-        // ridgeGeom3.vertices[4].y += 5;
-        // ridgeGeom3.vertices[6].y += 5;
-        // var ridgeMesh3 = new THREE.Mesh(ridgeGeom3,redMat);
-        // ridgeMesh3.position.set(0,14.5,-29);
-        this.mesh.add(ridgeMesh,ridgeMesh2);//,ridgeMesh3
+        var ridgeGeom3 = new THREE.BoxGeometry(3,5,3);
+        var ridgeMesh3 = new THREE.Mesh(ridgeGeom3,redMat);
+        ridgeMesh3.position.set(0,16,-28);
+        this.mesh.add(ridgeMesh,ridgeMesh2,ridgeMesh3);
         
         var propellerGroup = new THREE.Object3D();
         var axelGeom = new THREE.CylinderGeometry(1,1,5);
@@ -169,7 +167,14 @@ class Copter {
         wingMesh.position.z -= 8
         this.mesh.add(wingMesh);
 
-
+        this.mesh.traverse(function (object) {
+            if (object instanceof THREE.Mesh) {
+                object.castShadow = true;
+                object.receiveShadow = true;
+            }
+        });
+        this.mesh.scale.set(.5,.5,.5);
+        this.mesh.rotation.y -= Math.PI/2
     }
 
     update(){
