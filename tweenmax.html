@@ -16,6 +16,7 @@
     <script src="lib/TweenMax.js"></script>
     <script src="js/Units.js"></script>
     <script src="lib/ThreeBSP.js"></script>
+    <script src="js/Effect.js"></script>
 </head>
 <script id="vertexShader" type="x-shader/x-vertex">
     varying vec3 vNormal; void main() { vNormal = normalize( normalMatrix * normal ); gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }
@@ -188,7 +189,7 @@
         scene.add(lights[2]);
 
         function render() {
-            copter.update();
+            // copter.update();
             requestAnimationFrame(render);
             renderer.render(scene, camera);
         }
@@ -229,9 +230,11 @@
             transparent: true,
             opacity: 0.8
         });
-        var copter = new Copter();
-        scene.add(copter.mesh);
-
+        // var copter = new Copter();
+        // scene.add(copter.mesh);
+        var effect = new Effect();
+        scene.add(effect.mesh);
+        effect.explode();
         render();
 
         function createLights() {
