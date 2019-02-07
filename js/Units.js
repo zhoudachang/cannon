@@ -160,7 +160,6 @@ class Copter {
         propellerGroup.rotation.y += Math.PI/4;
         this.mesh.add(propellerGroup);
 
-
         var wingGemo = new THREE.BoxGeometry(26,1,8);
         var wingMesh = new THREE.Mesh(wingGemo,redMat);
         wingMesh.position.y += 10;

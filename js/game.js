@@ -171,9 +171,6 @@ function createLights() {
     shadowLight.shadow.camera.far = 200;
     shadowLight.shadow.mapSize.width = 1024;
     shadowLight.shadow.mapSize.height = 1024;
-    // var ch = new THREE.CameraHelper(shadowLight.shadow.camera);
-    // scene.add(ch);
-    // scene.add(hemisphereLight);
     scene.add(shadowLight);
     scene.add(ambientLight);
 }
@@ -234,7 +231,6 @@ function createGroud(blockw, blockh) {
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = -10;
     scene.add(ground);
-
 }
 
 var stuff;

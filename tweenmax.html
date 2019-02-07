@@ -234,7 +234,8 @@
         // scene.add(copter.mesh);
         var effect = new Effect();
         scene.add(effect.mesh);
-        effect.explode();
+        effect.explode(new THREE.Vector3(10,0,20));
+        // effect.fire(new THREE.Vector3(10,0,20),new THREE.Vector3(-1,0,0));
         render();
 
         function createLights() {

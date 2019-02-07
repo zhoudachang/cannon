@@ -120,6 +120,7 @@ class Engine {
             })
         });
         this.hudSprites = new HUDSprites(this);
+        this.effect = new Effect();
         // this.handlers = [];
     }
 
@@ -190,7 +191,7 @@ class Engine {
             y: angle,
             onComplete: () => {
                 var attackTimeLine = new TimelineLite();
-                let p = ["-=0", "-=0.99", "-=0.98", "-=0.97", "-=0.96", "-=0.95", "-=0.94", "-=0.93", "-=0.92", "-=0.91", "-0.90"];
+                let p = ["-=0", "-=0.99", "-=0.98", "-=0.97", "-=0.96", "-=0.95", "-=0.94", "-=0.93", "-=0.92", "-=0.91", "-=0.90"];
                 let tubePosWorld = this.current.tubeTop.getWorldPosition(new THREE.Vector3());
                 for (var i = 0; i < 5; i++) {
                     let f = new Particle();

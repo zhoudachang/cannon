@@ -30,10 +30,6 @@ class Tank {
         var rotateWapper = new THREE.Object3D();
     }
 
-    explode(){
-
-    }
-
     createBody() {
         var bodyShape = new THREE.Shape();
         bodyShape.moveTo(5, 0);
