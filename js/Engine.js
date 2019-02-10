@@ -2,7 +2,7 @@ BehaviorTree.register('fire', new BehaviorTree.Task({
     title: 'fire',
     run: function (unit) {
         console.log('fire');
-        if(unit.isFiring){
+        if (unit.isFiring) {
             this.running();
             return;
         }
@@ -61,18 +61,18 @@ BehaviorTree.register('move', new BehaviorTree.Task({
     title: 'move',
     run: function (unit) {
         console.log('move');
-        if(unit.isMoving){
+        if (unit.isMoving) {
             this.running();
             return;
         }
         var moveRange = calMoveRange(game.map, unit.index, unit.moveRadius);
         if (moveRange.length > 1) {
-            let unitVec = new THREE.Vector3(unit.index[0],0,unit.index[1]);
-            let distanceArray = engine.units.sort((a,b) => {
+            let unitVec = new THREE.Vector3(unit.index[0], 0, unit.index[1]);
+            let distanceArray = engine.units.sort((a, b) => {
                 // unit.
-                var d = new THREE.Vector3(a.index[0],0,a.index[1]).sub(unitVec.clone());
-                var d2 = new THREE.Vector3(b.index[0],0,b.index[1]).sub(unitVec.clone());
-                if(d.length() > d2.length()){
+                var d = new THREE.Vector3(a.index[0], 0, a.index[1]).sub(unitVec.clone());
+                var d2 = new THREE.Vector3(b.index[0], 0, b.index[1]).sub(unitVec.clone());
+                if (d.length() > d2.length()) {
                     return 1;
                 }
                 return -1;
@@ -124,8 +124,8 @@ class Engine {
         // this.handlers = [];
     }
 
-    resetUnit(){
-        
+    resetUnit() {
+
     }
 
     driveUnit(callback) {
@@ -180,7 +180,6 @@ class Engine {
     attack(callback) {
         this.isWorking = true;
         this.current.isFiring = true;
-        let speed = 1;
         var currnetVector = toPosition(this.current.index);
         var targetVector = toPosition(this.targetIndex); //new THREE.Vector3(this.targetIndex[1],0,this.targetIndex[0]);
         var dir = targetVector.clone().sub(currnetVector).normalize();
@@ -190,99 +189,9 @@ class Engine {
         TweenMax.to(this.current.tubeControl.rotation, .5, {
             y: angle,
             onComplete: () => {
-                var attackTimeLine = new TimelineLite();
-                let p = ["-=0", "-=0.99", "-=0.98", "-=0.97", "-=0.96", "-=0.95", "-=0.94", "-=0.93", "-=0.92", "-=0.91", "-=0.90"];
-                let tubePosWorld = this.current.tubeTop.getWorldPosition(new THREE.Vector3());
-                for (var i = 0; i < 5; i++) {
-                    let f = new Particle();
-                    let maxSneezingRate = 1;
-                    f.mesh.position.copy(tubePosWorld);
-                    var fdir = this.current.tubeDirection.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), angle);
-                    f.mesh.translateOnAxis(fdir, 1);
-                    f.color = {
-                        r: 255 / 255,
-                        g: 205 / 255,
-                        b: 74 / 255
-                    };
-                    f.mesh.material.color.setRGB(f.color.r, f.color.g, f.color.b);
-                    f.mesh.material.opacity = 1;
-                    this.current.mesh.parent.add(f.mesh);
-                    let af = 1;
-                    let bezierColor = [{
-                        r: 255 / 255,
-                        g: 205 / 255,
-                        b: 74 / 255
-                    }, {
-                        r: 255 / 255,
-                        g: 205 / 255,
-                        b: 74 / 255
-                    }, {
-                        r: 255 / 255,
-                        g: 205 / 255,
-                        b: 74 / 255
-                    }, {
-                        r: 247 / 255,
-                        g: 34 / 255,
-                        b: 50 / 255
-                    }, {
-                        r: 0 / 255,
-                        g: 0 / 255,
-                        b: 0 / 255
-                    }];
-                    let bezierScale = [{
-                        x: 1,
-                        y: 1,
-                        z: 1
-                    }, {
-                        x: af / maxSneezingRate + Math.random() * .3,
-                        y: af / maxSneezingRate + Math.random() * .3,
-                        z: af * 2 / maxSneezingRate + Math.random() * .3
-                    }, {
-                        x: af / maxSneezingRate + Math.random() * .5,
-                        y: af / maxSneezingRate + Math.random() * .5,
-                        z: af * 2 / maxSneezingRate + Math.random() * .5
-                    }, {
-                        x: af * 2 / maxSneezingRate + Math.random() * .5,
-                        y: af * 2 / maxSneezingRate + Math.random() * .5,
-                        z: af * 4 / maxSneezingRate + Math.random() * .5
-                    }, {
-                        x: af * 2 + Math.random() * 5,
-                        y: af * 2 + Math.random() * 5,
-                        z: af * 2 + Math.random() * 5
-                    }];
-                    attackTimeLine.add(
-                        [TweenMax.to(f.mesh.position, speed, {
-                                x: f.mesh.position.x + fdir.x * 20,
-                                y: f.mesh.position.y + fdir.y * 20 + 5,
-                                z: f.mesh.position.z + fdir.z * 20
-                            }),
-                            TweenMax.to(f.mesh.rotation, speed, {
-                                x: Math.random() * Math.PI * 3,
-                                z: Math.random() * Math.PI * 3,
-                            }),
-                            TweenMax.to(f.mesh.scale, speed, {
-                                bezier: bezierScale,
-                                ease: Strong.easeOut
-                            }),
-                            TweenMax.to(f.mesh.material, speed, {
-                                opacity: 0,
-                                ease: Strong.easeOut
-                            }),
-                            TweenMax.to(f.color, speed, {
-                                bezier: bezierColor,
-                                ease: Strong.easeOut,
-                                onUpdate: () => f.updateColor()
-                            })
-                        ], p[i], "start", 0);
-                }
-                attackTimeLine.call(() => {
-                    this.current.isFiring = false;
-                    this.current.flag = true;
-                    this.isWorking = false;
-                    if (callback) {
-                        callback();
-                    }
-                });
+                this.effect.fire(this.current.tubeTop.getWorldPosition(new THREE.Vector3()), 
+                    this.current.tubeDirection.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), angle), 
+                    callback);
             }
         });
 
@@ -375,7 +284,17 @@ class Engine {
                     }
                     break;
                 case "unitFire":
-                    this.attack();
+                    this.attack(() => {
+                        this.current.isFiring = false;
+                        this.current.flag = true;
+                        this.isWorking = false;
+                        // if(this.target){
+                            var explodePosition = toPosition(this.targetIndex);
+                            var ep_ = explodePosition.clone();
+                            ep_.y += 1;
+                            this.effect.explode(ep_);
+                        // }
+                    });
                     resetGround();
                     this.state = "pending";
                     break;

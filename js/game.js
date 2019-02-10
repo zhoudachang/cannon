@@ -129,14 +129,6 @@ function createScene() {
     hudCamera = new THREE.OrthographicCamera(-WIDTH / 2, WIDTH / 2, HEIGHT / 2, -HEIGHT / 2, 1, 10);
     hudCamera.position.z = 10;
     hudScene = new THREE.Scene();
-    hudScene.add(engine.hudSprites.mesh);
-    engine.stuff.forEach((stf) => {
-        scene.add(stf);
-    });
-    engine.units.forEach((unit) => {
-        scene.add(unit.mesh);
-    });
-
     window.addEventListener('resize', handleWindowResize, false);
 }
 
@@ -247,12 +239,20 @@ function init(event) {
             game.map[x][y] = 0;
         }
     }
+    createScene();
     engine = new Engine();
     stuff = new Stuff();
     stuff.refreshStuff(engine);
-    createScene();
     stuff.createClouds(1);
     river = new River();
+    hudScene.add(engine.hudSprites.mesh);
+    scene.add(engine.effect.mesh);
+    engine.stuff.forEach((stf) => {
+        scene.add(stf);
+    });
+    engine.units.forEach((unit) => {
+        scene.add(unit.mesh);
+    });
     scene.add(river.mesh);
     scene.add(stuff.mesh);
     var mountain = new Mountain();
