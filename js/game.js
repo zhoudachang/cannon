@@ -1,4 +1,4 @@
-var Colors = {
+const Colors = {
     red: 0xf25346,
     white: 0xd8d0d1,
     lightgreen: 0x629265,
@@ -55,7 +55,6 @@ var game = {
     segmentsLength: 10,
     shellHitDistance: 20
 };
-var stats = new Stats();
 var raycaster = new THREE.Raycaster();
 var mouseVector = new THREE.Vector3();
 
@@ -228,7 +227,7 @@ function createGroud(blockw, blockh) {
 var stuff;
 var river;
 function init(event) {
-    document.body.appendChild(stats.dom)
+    // document.body.appendChild(stats.dom)
     // var loader = new THREE.FileLoader();
     game.stageWidth = 100;
     game.stageHeight = 100;

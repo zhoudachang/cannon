@@ -5,7 +5,6 @@
     <title>Cannon</title>
     <style>
         body {
-            /* set margin to 0 and overflow to hidden, to go fullscreen */
             margin: 0;
             display: block;
             overflow: hidden;
@@ -14,58 +13,54 @@
     <script src="lib/three.js"></script>
     <script src="lib/ThreeBSP.js"></script>
     <script src="lib/OrbitControls.js"></script>
+    <script src="lib/btree-complete.js"></script>
     <script src="lib/TweenMax.js"></script>
     <script src="lib/dat.gui.min.js"></script>
     <script src="lib/stats.min.js"></script>
-    <script src="js/Cannon.js"></script>
-    <script src="js/Tank.js"></script>
-    <script src="js/SmokeParticle.js"></script>
-    <script src="js/Stage.js"></script>
-    <script src="js/Lights.js"></script>
+    <script src="lib/funs.js"></script>
+    <script src="js/HUD.js"></script>
+    <script src="js/Effect.js"></script>
+    <script src="js/Units.js"></script>
+    <script src="js/River.js"></script>
+    <script src="js/Engine2.js"></script>
+    <script src="js/Mountain.js"></script>
+    <script src="js/MenuScene.js"></script>
+    <script src="js/GameScene.js"></script>
+
+
 </head>
 
 <body>
     <script>
         var scene = new THREE.Scene();
-        // scene.fog = new THREE.Fog(0x652e37, 350, 500);
-        var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 3000);
-        camera.position.x = 120;
-        camera.position.y = 100;
-        camera.position.z = 0;
-        camera.lookAt(new THREE.Vector3(-50, 0, 0));
-        var controls = new THREE.OrbitControls(camera);
-        scene.add(camera);
+        var WIDTH = window.innerWidth;
+        var HEIGHT = window.innerHeight;
         var renderer = new THREE.WebGLRenderer({
             antialias: true,
             alpha: true
         });
-        renderer.setClearColor(0xffffc0);
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setSize(WIDTH, HEIGHT);
         renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.gammaInput = true;
-        var stats = new Stats();
-        document.body.appendChild(stats.dom)
-        document.body.appendChild(renderer.domElement);
-        // scene.add(new THREE.GridHelper(1000,100));
-        scene.add(new THREE.AxesHelper(1000));
-        var cannon = new Cannon();
-        scene.add(cannon.mesh);
-        var tank = new Tank();
-        tank.mesh.position.x -= 150;
-        scene.add(tank.mesh);
-        scene.add(new Lights().lights);
-        scene.add(new Stage().mesh);
-        document.addEventListener('mousedown', onDocumentMouseDown, false);
+        renderer.autoClear = false;
 
-        function onDocumentMouseDown(event) {
-            cannon.shoot();
-        }
+        var stats = new Stats();
+        document.body.appendChild(stats.dom);
+        document.body.appendChild(renderer.domElement);
+        var menuScene = new MenuScene();
+        var gameScene = new GameScene();
 
         function render() {
-            cannon.update();
             stats.update();
+            renderer.clear();
+            if(menuScene.crossed){
+                gameScene.render(renderer);
+            } else {
+                renderer.render(menuScene.scene, menuScene.camera);
+            }
             requestAnimationFrame(render);
-            renderer.render(scene, camera);
         }
         render();
     </script>

@@ -6,8 +6,16 @@ class Unit {
         this.mesh.castShadow = true;
     }
 
-    get tubeControl() {
-        return this.mesh.getObjectByName('tubeControl');
+    // get tubeControl() {
+    //     return this.mesh.getObjectByName('tubeControl');
+    // }
+
+    get horizontalControl() {
+        return this.mesh.getObjectByName('horizontalControl');
+    }
+
+    get verticalController(){
+        return this.mesh.getObjectByName('verticalController');
     }
 
     get tubeTop() {
@@ -34,7 +42,7 @@ class Cannon extends Unit {
         this.shells = [];
         var geometry = new THREE.CylinderGeometry(baseRadiusTop, baseRadiusBottom, baseHeight, 20);
         var baseMesh = new THREE.Mesh(geometry, whiteMat);
-        baseMesh.name = 'tubeControl';
+        baseMesh.name = 'horizontalControl';
         baseMesh.position.y += baseHeight / 2;
         this.mesh.add(baseMesh);
         var geometry = new THREE.SphereGeometry(baseRadiusTop * 0.8, 32, 32, 0, Math.PI);
@@ -43,8 +51,8 @@ class Cannon extends Unit {
         hatMesh.name = 'hatMesh';
         hatMesh.position.y += baseHeight / 2;
         var geometry = new THREE.CylinderGeometry(baseRadiusTop - 1, baseRadiusBottom - 1, baseHeight, 20);
-        var horizontalAxle = new THREE.Mesh(geometry, blackMat);
-        horizontalAxle.name = 'horizontalControl';
+        var horizontalAxle = new THREE.Mesh(geometry);
+        horizontalAxle.name = 'verticalController';
         geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
         horizontalAxle.position.copy(hatMesh.position.clone());
         var tubeGemo = new THREE.CylinderGeometry(2, 1, 3, tubeSegments);
@@ -52,7 +60,7 @@ class Cannon extends Unit {
         var tubeMesh = new THREE.Mesh(tubeGemo, blackMat);
         tubeMesh.position.set(-10, 0, 0);
         horizontalAxle.add(tubeMesh);
-        horizontalAxle.rotation.z -= Math.PI / 4;
+        // horizontalAxle.rotation.z -= Math.PI / 4;
         var tubeGemo2 = new THREE.CylinderGeometry(0.8, 0.8, 10, tubeSegments);
         tubeGemo2.applyMatrix(new THREE.Matrix4().makeRotationZ(-Math.PI / 2));
         var tubeMesh2 = new THREE.Mesh(tubeGemo2, blackMat);
@@ -218,7 +226,7 @@ class Tank extends Unit {
         this.mesh.add(bodyMesh);
         var hatGeom = new THREE.CylinderGeometry(5, 5, 5);
         var tubeControl = new THREE.Mesh(hatGeom, yellowMat);
-        tubeControl.name = "tubeControl";
+        tubeControl.name = "horizontalControl";
         tubeControl.position.y += 11;
         var hatGeom2 = new THREE.CylinderGeometry(3, 3, 2);
         var hatMesh2 = new THREE.Mesh(hatGeom2, yellowMat);
@@ -240,7 +248,6 @@ class Tank extends Unit {
         tubeTopMesh.name = 'tubeTop';
         tubeTopMesh.position.x += 14;
         tubeControl.add(tubeMesh, tubeTopMesh);
-
 
         this.mesh.add(tubeControl);
         var frontWheelGeom = new THREE.CylinderGeometry(4, 4, 2, 16);
@@ -268,6 +275,7 @@ class Tank extends Unit {
                 object.receiveShadow = true;
             }
         });
+
         this.mesh.scale.set(.5, .5, .5);
     }
     hit() {

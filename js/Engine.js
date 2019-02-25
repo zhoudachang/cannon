@@ -124,6 +124,10 @@ class Engine {
         // this.handlers = [];
     }
 
+    boot(){
+        console.log('engine boot');
+    }
+
     resetUnit() {
 
     }

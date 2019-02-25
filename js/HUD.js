@@ -14,6 +14,103 @@ function roundRect(ctx, x, y, w, h, r) {
     ctx.stroke();
 }
 
+class Controller {
+    constructor(cannon){
+        this.target = cannon;
+        this.mesh = new THREE.Object3D();
+        let center = new THREE.Vector2(0,- HEIGHT / 2 + 64);
+        let controllerRadius = 64;
+        this.textureLoader = new THREE.TextureLoader();
+        this.textureLoader.load('images/j.jpg',(texture) => {
+            let mat = new THREE.SpriteMaterial({
+                map: texture,
+                transparent: true,
+                opacity: 0.6
+            });
+            let controller = new THREE.Sprite(mat);
+            controller.scale.set(controllerRadius*2,controllerRadius*2,1);
+            controller.position.set(center.x,center.y,1);
+            this.mesh.add(controller);
+        });
+        this.textureLoader.load('images/circle.png',(texture) => {
+            let mat = new THREE.SpriteMaterial({
+                map: texture,
+            });
+            let circle = new THREE.Sprite(mat);
+            circle.name = 'circle';
+            circle.scale.set(40,40,1);
+            circle.position.set(center.x,center.y,1);
+            this.mesh.add(circle);
+        });
+        let convertPosition = (x,y) => {
+            let x_ = x - WIDTH/2;
+            let y_ = - y + HEIGHT/2;
+            return new THREE.Vector2(x_,y_);
+        };
+        let moveListenner = (event) => {
+            let movex = event.layerX;
+            let movey = event.layerY;
+            let dp = convertPosition(movex,movey);
+            let c = this.mesh.getObjectByName('circle');
+            // let dpsubct = dp.sub(center);
+            let dpsubct = dp.sub(center).max(new THREE.Vector2(-controllerRadius,-controllerRadius)).min(new THREE.Vector2(controllerRadius,controllerRadius));
+
+            // if(dpsubct.length() <= controllerRadius){
+            //     c.position.set(dp.x,dp.y - HEIGHT / 2 + controllerRadius ,1);
+            // } else {
+            //     let nor = dpsubct.normalize();
+            //     c.position.set(controllerRadius * nor.x,controllerRadius * nor.y - HEIGHT / 2 + controllerRadius,1);
+            // }
+            // this.target.horizontalControl.rotation.y = - Math.PI/2 * c.position.x / controllerRadius;
+            // let yd = center.y - c.position.y;
+            // // console.log(- Math.PI / 4 * c.position.y / controllerRadius);
+            // this.target.verticalController.rotation.z =  Math.PI / 4 * yd / controllerRadius;
+            // let x_ = dpsubct.x > controllerRadius?controllerRadius:dpsubct.x;
+            // let y_ = dpsubct.y > controllerRadius?controllerRadius:dpsubct.y - HEIGHT/2 + controllerRadius;
+            console.log(dpsubct);
+            c.position.set(dpsubct.x,dpsubct.y - HEIGHT/2 + controllerRadius,1);
+        }
+        document.addEventListener("mousedown", (event) => {
+            document.addEventListener("mousemove",moveListenner);
+            let x = event.layerX;
+            let y = event.layerY;
+            let dp = convertPosition(x,y);
+            let c = this.mesh.getObjectByName('circle');
+            let dpsubct = dp.sub(center).max(new THREE.Vector2(- controllerRadius, - controllerRadius)).min(new THREE.Vector2(controllerRadius,controllerRadius));
+            // let x_ = dpsubct.x > controllerRadius?controllerRadius:dpsubct.x;
+            // let y_ = dpsubct.y > controllerRadius?controllerRadius:dpsubct.y - HEIGHT/2 + controllerRadius;
+            // console.log(x_,y_);
+            console.log(dpsubct);
+            c.position.set(dpsubct.x,dpsubct.y - HEIGHT/2 + controllerRadius,1);
+            // if(dpsubct.length() <= controllerRadius){
+            //     c.position.set(dp.x,dp.y - HEIGHT / 2 + controllerRadius,1);
+            // } else {
+            //     let nor = dpsubct.normalize();
+            //     c.position.set(controllerRadius * nor.x,controllerRadius * nor.y - HEIGHT / 2 + controllerRadius,1);
+            // }
+            //range => 
+            // this.target.horizontalControl.rotation.y = - Math.PI /2 * c.position.x / controllerRadius;
+            // let yd = center.y - c.position.y;
+            // console.log(- Math.PI / 4 * c.position.y / controllerRadius);
+            // this.target.verticalController.rotation.z =  Math.PI / 4 * yd / controllerRadius;
+
+
+
+        }, false);
+        document.addEventListener("mouseup", (event) => {
+            let c = this.mesh.getObjectByName('circle');
+            c.position.set(center.x,center.y,1);
+            this.target.horizontalControl.rotation.y = 0;
+            this.target.verticalController.rotation.z = 0;
+            document.removeEventListener("mousemove",moveListenner);
+        }, false);
+    }
+
+
+}
+
+
+
 class BottomSprite {
     constructor() {
         this.mesh = new THREE.Object3D();
